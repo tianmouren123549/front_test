@@ -72,8 +72,11 @@ const router = useRouter();
 // 目前从 sessionStorage 读取登录时存储的用户信息（临时方案）
 
 // 用户信息
+// 对应数据库表：sys_user, edu_student
 const userInfo = ref({
-  name: '',
+  user_id: null, // sys_user.user_id
+  nick_name: '', // sys_user.nick_name（昵称/显示名）
+  avatar: '', // sys_user.avatar（头像）
 });
 
 onMounted(() => {
@@ -92,7 +95,13 @@ onMounted(() => {
       return;
     }
 
-    userInfo.value.name = data.name || '';
+    userInfo.value = {
+      user_id: data.userId || null,
+      nick_name: data.name || '',
+      avatar:
+        data.avatar ||
+        'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+    };
   } catch (e) {
     console.error('解析用户信息失败', e);
     router.push('/login');
@@ -127,17 +136,15 @@ const goToProfile = () => {
 <template>
   <div class="topbar">
     <div class="announce-area">
-      <span class="announce-inline">公告栏：本周起上课时间调整为 8:30 开始</span>
+      <span class="announce-inline"
+        >公告栏：本周起上课时间调整为 8:30 开始</span
+      >
     </div>
 
     <div class="user-area">
-      <span class="user-name">{{ userInfo.name }}</span>
+      <span class="user-name">{{ userInfo.nick_name }}</span>
       <el-dropdown @command="handleLogout">
-        <img
-          src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-          alt="avatar"
-          class="user-avatar"
-        />
+        <img :src="userInfo.avatar" alt="avatar" class="user-avatar" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="goToProfile">

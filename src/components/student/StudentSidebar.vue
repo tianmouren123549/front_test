@@ -119,10 +119,15 @@ const switchView = inject('switchView');
 // 目前从 sessionStorage 读取登录时存储的用户信息（临时方案）
 
 // 用户信息（从 sessionStorage 获取）
+// 对应数据库表：sys_user, edu_student
 const userInfo = ref({
-  name: '',
-  id: '',
-  role: '',
+  user_id: null, // sys_user.user_id
+  student_id: null, // edu_student.student_id
+  student_no: '', // edu_student.student_no（学号）
+  nick_name: '', // sys_user.nick_name（昵称/显示名）
+  real_name: '', // sys_user.real_name（真实姓名）
+  avatar: '', // sys_user.avatar（头像）
+  user_type: '', // sys_user.user_type（用户类型：STUDENT）
 });
 
 onMounted(() => {
@@ -142,9 +147,15 @@ onMounted(() => {
     }
 
     userInfo.value = {
-      name: data.name || '',
-      id: data.username || '',
-      role: data.role || '',
+      user_id: data.userId || null,
+      student_id: data.studentId || null,
+      student_no: data.username || '', // 临时使用 username 作为学号
+      nick_name: data.name || '',
+      real_name: data.realName || data.name || '',
+      avatar:
+        data.avatar ||
+        'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+      user_type: 'STUDENT',
     };
   } catch (e) {
     console.error('解析用户信息失败', e);
@@ -174,13 +185,10 @@ const handleMenuClick = view => {
     <div class="brand">北泽智慧教学平台（学生端）</div>
 
     <div class="profile">
-      <img
-        src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-        alt="avatar"
-      />
+      <img :src="userInfo.avatar" alt="avatar" />
       <div class="profile-info">
-        <div class="profile-name">{{ userInfo.name }}</div>
-        <div class="profile-id">{{ userInfo.id }}</div>
+        <div class="profile-name">{{ userInfo.nick_name }}</div>
+        <div class="profile-id">{{ userInfo.student_no }}</div>
       </div>
     </div>
 

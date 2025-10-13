@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课程详情</title>
+  <style>
+    :root{--bg:#f7f8fb;--card:#fff;--border:#e5e7eb;--text:#1f2937;--muted:#6b7280;--primary:#5b7cff;--green:#22c55e;--red:#ef4444;}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei',sans-serif}
+    a{color:inherit}
+
+    .app{display:grid;grid-template-columns:257px 1fr;height:100vh}
+    .sidebar{background:#fff;border-right:1px solid var(--border);padding:20px 16px}
+    .menu{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .menu a{padding:10px 12px;border-radius:8px;color:#334155;text-decoration:none}
+    .menu a.active,.menu a:hover{background:#f1f5f9}
+
+    .topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+    .crumbs{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .crumbs a{color:var(--muted);text-decoration:none;padding:4px 8px;border-radius:6px;position:relative;transition:all 0.3s ease;border:1px solid transparent}
+    .crumbs a:hover{color:#3b82f6;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);box-shadow:0 2px 4px rgba(59,130,246,0.1);transform:translateY(-1px)}
+    .crumbs > span:not([id]){color:var(--muted);font-weight:300;opacity:0.6;transition:opacity 0.2s ease}
+    .crumbs:hover > span:not([id]){opacity:0.8}
+    .crumbs span[id]{padding:4px 8px;border-radius:6px;transition:all 0.3s ease;position:relative}
+    .crumbs span[id]:hover{background:rgba(16,185,129,0.08);color:#10b981;box-shadow:0 1px 3px rgba(16,185,129,0.1)}
+
+    .content{padding:16px 20px}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tabs button{padding:8px 12px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;color:#334155}
+    .tabs button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+    /* 学习日志：横向时间轴 */
+    .timeline{display:flex;gap:16px;align-items:stretch}
+    .t-item{width:240px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+    .t-time{font-size:12px;color:var(--muted)}
+    .t-tag{font-size:12px;padding:2px 6px;border-radius:999px;background:#eef2ff;color:#3730a3;width:max-content}
+
+    /* 作业列表 */
+    .hw-item{border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center}
+    .hw-item a.btn{padding:8px 10px;border-radius:8px;background:var(--primary);color:#fff;text-decoration:none;white-space:nowrap;min-width:80px;text-align:center}
+
+    /* 用户画像：简洁指标卡 */
+    .metric{border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px}
+    .ring{width:56px;height:56px;border-radius:50%;background:conic-gradient(var(--green) calc(var(--p)*1%),#e5e7eb 0);display:grid;place-items:center}
+    .ring span{background:#fff;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;font-weight:600}
+
+    /* 错题记录 */
+    .wrong-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .btn{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap;text-align:center;transition:all 0.2s;font-size:13px;font-weight:500;min-height:36px;line-height:1.4}
+    .btn:hover{background:var(--bg);transform:translateY(-1px)}
+    
+    /* 按钮尺寸统一化 */
+    .btn-sm{padding:6px 12px;font-size:12px;min-height:32px}
+    .btn-xs{padding:4px 8px;font-size:11px;min-height:28px}
+    .wrong-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .wrong-card{border:1px solid var(--border);border-radius:10px;padding:10px}
+
+    /* 视图容器（不滚动或极少滚动） */
+    .view{min-height:360px}
+
+    /* 题目筛选按钮样式 */
+    .question-filter {
+      transition: all 0.2s ease;
+    }
+    
+    .question-filter:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .question-filter.active {
+      background: var(--primary) !important;
+      border-color: var(--primary) !important;
+      color: #fff !important;
+    }
+
+    /* 用户下拉菜单样式 */
+    .user-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .user-profile-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .user-profile-trigger:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: -5px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      width: 110px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      margin-top: 5px;
+    }
+    
+    .user-dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .dropdown-menu a {
+      display: block;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .dropdown-menu a:last-child {
+      border-bottom: none;
+    }
+    
+    .dropdown-menu a:hover {
+      background: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div style="font-weight:700;color:#64748b">贵州大学（学生）</div>
+      <div class="menu">
+        <!-- <a href="index.html">课程/课表</a> -->
+        <a href="#" id="linkLearningRecord" class="active">学习记录</a>
+        <a href="#" id="linkChapterContent">章节内容</a>
+        <a href="#" id="linkCourseTasks">课程任务</a>
+      </div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <div class="crumbs">
+      <a href="index.html">返回</a> 
+      <span>/</span> 
+      <span id="courseName">高等数学（上）</span> 
+      <span>·</span> 
+      <span>课程详情</span>
+    </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <a href="liveroom.html?course=高等数学（上）&mode=live&from=detail" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;text-decoration:none;font-size:13px">进入课堂</a>
+          <div style="color:#94a3b8;font-size:12px">学年学期 · 第 2 周</div>
+          <div class="user-dropdown" style="margin-left:16px">
+            <div class="user-profile-trigger">
+              <span style="color:var(--muted);font-size:13px">123</span>
+              <img src="https://picsum.photos/seed/user123/32" style="width:32px;height:32px;border-radius:50%" alt="用户头像" />
+            </div>
+            <div class="dropdown-menu">
+              <a href="#" onclick="goToProfile()">
+                <span>个人中心</span>
+              </a>
+              <a href="#" onclick="logout()">
+                <span>退出登录</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="content">
+                  <div class="tabs">
+            <!-- 顶部tabs现在为空，主要功能移至侧边栏二级菜单 -->
+          </div>
+
+
+
+
+
+
+
+
+
+        <!-- 学习记录视图 -->
+        <section id="viewLearningRecord" class="view">
+          <div class="panel">
+            <div style="font-weight:600;margin-bottom:16px;color:var(--text)">📚 学习记录</div>
+            <!-- 二级菜单tabs -->
+            <div class="tabs" style="margin-bottom: 20px;">
+              <button id="tabLog" class="active">学习日志</button>
+              <button id="tabProfile">学习画像</button>
+              <button id="tabWrong">错题记录</button>
+            </div>
+            
+            <!-- 学习日志内容 -->
+            <div id="viewLog" class="sub-view">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">12-15 周二</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">08:30</div><div class="t-tag">知识点</div><div>第6章 定积分的应用</div></div>
+                  <button class="btn" onclick="viewKnowledgePoint('第6章 定积分的应用')" style="background:var(--primary);color:#fff;border:none">📚 查看详情</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">12-10 周四</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">10:00</div><div class="t-tag">练习</div><div>导数运算练习</div></div>
+                  <button class="btn" onclick="startPractice('导数运算练习')" style="background:var(--green);color:#fff;border:none">💪 开始练习</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">12-08 周二</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">08:30</div><div class="t-tag">知识点</div><div>第5章 微分中值定理</div></div>
+                  <button class="btn" onclick="viewKnowledgePoint('第5章 微分中值定理')" style="background:var(--primary);color:#fff;border:none">📚 查看详情</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">12-03 周四</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">10:00</div><div class="t-tag">知识图谱</div><div>第4章 函数的导数</div></div>
+                  <button class="btn" onclick="viewKnowledgeGraph('第4章 函数的导数')" style="background:#8b5cf6;color:#fff;border:none">🌐 查看图谱</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">12-01 周二</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">08:30</div><div class="t-tag">作业讲解</div><div>极限计算习题讲解</div></div>
+                  <a class="btn" href="liveroom_off.html?course=高等数学（上）&mode=replay&from=detail&content=极限计算习题讲解" style="background:#f59e0b;color:#fff">📺 观看回放</a>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:80px;color:var(--muted)">11-28 周六</div>
+                  <div class="t-item" style="flex:1"><div class="t-time">14:30</div><div class="t-tag">补课</div><div>第3章 函数的极限</div></div>
+                  <a class="btn" href="liveroom_off.html?course=高等数学（上）&mode=replay&from=detail&content=第3章 函数的极限" style="background:#f59e0b;color:#fff">📺 观看回放</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- 学习画像内容 -->
+            <div id="viewProfile" class="sub-view" style="display:none">
+              <!-- 知识点掌握度总览 -->
+              <div class="panel" style="margin-bottom:20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                  <div style="font-weight:600;color:var(--text)">🎯 知识点掌握情况</div>
+                  <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:11px">查缺补漏</span>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+                  <!-- 极限知识点 -->
+                  <div style="border:1px solid #fecaca;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:10px;padding:14px;position:relative">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                      <div style="font-weight:600;color:#991b1b">📐 极限</div>
+                      <span style="background:#ef4444;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">薄弱</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                      <div style="width:80px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+                        <div style="width:37%;height:100%;background:#ef4444"></div>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:#ef4444">37%</span>
+                    </div>
+                    <div style="font-size:11px;color:#991b1b;margin-bottom:8px">
+                      <strong>薄弱点：</strong><br>
+                      • 重要极限公式混淆<br>
+                      • 0/0型极限计算错误<br>
+                      • 无穷小比较不熟练
+                    </div>
+                    <button onclick="alert('开始极限专项练习')" class="btn btn-sm" style="width:100%;background:#ef4444;color:#fff;border:none">🔥 专项突破</button>
+                  </div>
+
+                  <!-- 导数知识点 -->
+                  <div style="border:1px solid #fed7aa;background:linear-gradient(135deg,#fff7ed,#fed7aa);border-radius:10px;padding:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                      <div style="font-weight:600;color:#9a3412">📈 导数</div>
+                      <span style="background:#f59e0b;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">待提升</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                      <div style="width:80px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+                        <div style="width:49%;height:100%;background:#f59e0b"></div>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:#f59e0b">49%</span>
+                    </div>
+                    <div style="font-size:11px;color:#9a3412;margin-bottom:8px">
+                      <strong>薄弱点：</strong><br>
+                      • 复合函数求导链式法则<br>
+                      • 隐函数求导步骤<br>
+                      • 高阶导数计算
+                    </div>
+                    <button onclick="alert('开始导数强化练习')" class="btn btn-sm" style="width:100%;background:#f59e0b;color:#fff;border:none">⚡ 强化训练</button>
+                  </div>
+
+                  <!-- 微分应用知识点 -->
+                  <div style="border:1px solid #bbf7d0;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:10px;padding:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                      <div style="font-weight:600;color:#14532d">🎯 微分应用</div>
+                      <span style="background:#22c55e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">良好</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                      <div style="width:80px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+                        <div style="width:78%;height:100%;background:#22c55e"></div>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:#22c55e">78%</span>
+                    </div>
+                    <div style="font-size:11px;color:#14532d;margin-bottom:8px">
+                      <strong>优势点：</strong><br>
+                      • 切线方程求解熟练<br>
+                      • 单调性判断准确<br>
+                      • 极值问题理解清晰
+                    </div>
+                    <button onclick="alert('保持练习微分应用')" class="btn btn-sm" style="width:100%;background:#22c55e;color:#fff;border:none">✨ 保持水平</button>
+                  </div>
+
+                  <!-- 积分知识点 -->
+                  <div style="border:1px solid #fed7aa;background:linear-gradient(135deg,#fff7ed,#fed7aa);border-radius:10px;padding:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                      <div style="font-weight:600;color:#9a3412">∫ 积分</div>
+                      <span style="background:#f59e0b;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">一般</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                      <div style="width:80px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+                        <div style="width:55%;height:100%;background:#f59e0b"></div>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:#f59e0b">55%</span>
+                    </div>
+                    <div style="font-size:11px;color:#9a3412;margin-bottom:8px">
+                      <strong>需加强：</strong><br>
+                      • 换元积分法技巧<br>
+                      • 分部积分选择策略<br>
+                      • 定积分应用题
+                    </div>
+                    <button onclick="alert('开始积分提升练习')" class="btn btn-sm" style="width:100%;background:#f59e0b;color:#fff;border:none">📚 提升练习</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 学习诊断报告 -->
+              <div class="panel" style="margin-bottom:20px">
+                <div style="font-weight:600;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px">
+                  <span>🔍</span>学习诊断报告
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                  <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <span style="font-size:16px">⚠️</span>
+                      <span style="font-weight:600;color:#b45309">急需突破</span>
+                    </div>
+                    <div style="font-size:12px;color:#8a5700;line-height:1.4">
+                      <strong>极限计算</strong> - 错题率63%<br>
+                      建议：重点复习重要极限公式，多做0/0型极限练习题
+                    </div>
+                    <button onclick="alert('查看极限错题集')" class="btn btn-xs" style="margin-top:8px;background:transparent;border:1px solid #f59e0b;color:#b45309">查看错题集</button>
+                  </div>
+                  
+                  <div style="background:#ecfdf5;border:1px solid #22c55e;border-radius:8px;padding:12px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                      <span style="font-size:16px">💪</span>
+                      <span style="font-weight:600;color:#16a34a">优势保持</span>
+                    </div>
+                    <div style="font-size:12px;color:#15803d;line-height:1.4">
+                      <strong>微分应用</strong> - 掌握度78%<br>
+                      建议：继续保持，可以尝试更复杂的应用题挑战
+                    </div>
+                    <button onclick="alert('查看进阶练习')" class="btn btn-xs" style="margin-top:8px;background:transparent;border:1px solid #22c55e;color:#16a34a">进阶练习</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 个性化学习建议 -->
+              <div class="panel">
+                <div style="font-weight:600;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px">
+                  <span>🎯</span>个性化学习建议
+                </div>
+                
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="background:#f0f9ff;border:1px solid #0ea5e9;border-radius:8px;padding:12px">
+                    <div style="font-weight:600;color:#0369a1;margin-bottom:6px">📅 本周学习计划</div>
+                    <div style="font-size:12px;color:var(--text);line-height:1.4">
+                      • 周二：极限专项练习30分钟<br>
+                      • 周四：导数综合题训练45分钟<br>
+                      • 周日：微分应用巩固练习20分钟
+                    </div>
+                  </div>
+                  
+                  <div style="background:#fff7e6;border:1px solid #f59e0b;border-radius:8px;padding:12px">
+                    <div style="font-weight:600;color:#b45309;margin-bottom:6px">🎲 推荐学习方式</div>
+                    <div style="font-size:12px;color:var(--text);line-height:1.4">
+                      • 使用错题本记录易错知识点<br>
+                      • 观看极限概念视频课程回放<br>
+                      • 参加周三晚答疑课，重点问极限问题
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 错题记录内容 -->
+            <div id="viewWrong" class="sub-view" style="display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="color:var(--muted)">共找到 <span id="questionCount">6</span> 道错题</div>
+                <button id="btnRandom" class="btn btn-sm" style="background:var(--primary);color:#fff;border:none">随机练习</button>
+              </div>
+              <!-- 题目类型筛选 -->
+              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+                <button class="question-filter active" data-type="all" style="padding:6px 12px;border:1px solid var(--primary);background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px">全部</button>
+                <button class="question-filter" data-type="choice" style="padding:6px 12px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;cursor:pointer;font-size:12px">选择题</button>
+                <button class="question-filter" data-type="fill" style="padding:6px 12px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;cursor:pointer;font-size:12px">填空题</button>
+                <button class="question-filter" data-type="calculation" style="padding:6px 12px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;cursor:pointer;font-size:12px">计算题</button>
+                <button class="question-filter" data-type="concept" style="padding:6px 12px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;cursor:pointer;font-size:12px">概念题</button>
+              </div>
+              <div id="questionList" style="display:flex;flex-direction:column;gap:12px">
+                <div class="wrong-card" data-type="fill">
+                  <div style="font-weight:600">Q1. 求极限 lim(x→0) (sin x)/x = ____</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：0；正确答案：1</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：这是重要极限公式，需熟记</div>
+                </div>
+                <div class="wrong-card" data-type="choice">
+                  <div style="font-weight:600">Q2. 函数 f(x) = x³ 的导数是？</div>
+                  <div style="color:var(--muted);margin-top:6px">A) x²  B) 3x²  C) 3x  D) x³</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：A；正确答案：B</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：幂函数求导法则 (xⁿ)' = n·xⁿ⁻¹</div>
+                </div>
+                <div class="wrong-card" data-type="calculation">
+                  <div style="font-weight:600">Q3. 求定积分 ∫[0,1] 2x dx = ?</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：x²；正确答案：1</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：记得代入上下限进行计算</div>
+                </div>
+                <div class="wrong-card" data-type="concept">
+                  <div style="font-weight:600">Q4. 函数的连续性定义是什么？</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：函数值存在；正确答案：左极限=右极限=函数值</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：连续性的三个条件缺一不可</div>
+                </div>
+                <div class="wrong-card" data-type="choice">
+                  <div style="font-weight:600">Q5. 中值定理的前提条件是？</div>
+                  <div style="color:var(--muted);margin-top:6px">A) 可导  B) 连续  C) 闭区间连续，开区间可导  D) 单调</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：A；正确答案：C</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：注意区间的开闭性要求</div>
+                </div>
+                <div class="wrong-card" data-type="calculation">
+                  <div style="font-weight:600">Q6. 求 y = sin(2x+1) 的导数</div>
+                  <div style="color:var(--muted);margin-top:6px">你的答案：cos(2x+1)；正确答案：2cos(2x+1)</div>
+                  <div style="color:var(--red);font-size:12px;margin-top:4px">💡 提示：复合函数求导，外层导数×内层导数</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节内容视图 -->
+        <section id="viewChapterContent" class="view" style="display:none">
+          <div class="panel">
+            <div style="font-weight:600;margin-bottom:16px;color:var(--text)">📖 章节内容</div>
+            
+            <!-- 章节列表 -->
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--card)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                  <div style="width:40px;height:40px;background:var(--primary);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px">1</div>
+                  <div>
+                    <div style="font-weight:600;color:var(--text)">第一章 函数与极限</div>
+                    <div style="color:var(--muted);font-size:13px">8个知识点 · 预计学习时间 4小时</div>
+                  </div>
+                  <div style="margin-left:auto">
+                    <span style="background:var(--green);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">已完成</span>
+                  </div>
+                </div>
+                <div style="color:var(--text);font-size:14px;margin-bottom:8px">主要内容：函数的概念、极限的定义与性质、连续性</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-sm" style="background:var(--primary);color:#fff;border:none">进入学习</button>
+                  <button class="btn btn-sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary)">章节测试</button>
+                </div>
+              </div>
+              
+              <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--card)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                  <div style="width:40px;height:40px;background:var(--orange);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px">2</div>
+                  <div>
+                    <div style="font-weight:600;color:var(--text)">第二章 导数与微分</div>
+                    <div style="color:var(--muted);font-size:13px">10个知识点 · 预计学习时间 5小时</div>
+                  </div>
+                  <div style="margin-left:auto">
+                    <span style="background:var(--orange);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">学习中</span>
+                  </div>
+                </div>
+                <div style="color:var(--text);font-size:14px;margin-bottom:8px">主要内容：导数的概念、求导法则、微分的应用</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-sm" style="background:var(--primary);color:#fff;border:none">继续学习</button>
+                  <button class="btn btn-sm" style="background:transparent;color:var(--muted);border:1px solid var(--border);cursor:not-allowed" disabled>章节测试</button>
+                </div>
+              </div>
+              
+              <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--card)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                  <div style="width:40px;height:40px;background:var(--muted);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px">3</div>
+                  <div>
+                    <div style="font-weight:600;color:var(--text)">第三章 积分学</div>
+                    <div style="color:var(--muted);font-size:13px">12个知识点 · 预计学习时间 6小时</div>
+                  </div>
+                  <div style="margin-left:auto">
+                    <span style="background:var(--muted);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">未开始</span>
+                  </div>
+                </div>
+                <div style="color:var(--text);font-size:14px;margin-bottom:8px">主要内容：不定积分、定积分、积分的应用</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-sm" style="background:transparent;color:var(--muted);border:1px solid var(--border);cursor:not-allowed" disabled>进入学习</button>
+                  <button class="btn btn-sm" style="background:transparent;color:var(--muted);border:1px solid var(--border);cursor:not-allowed" disabled>章节测试</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 课程任务视图 -->
+        <section id="viewCourseTasks" class="view" style="display:none">
+          <div class="panel">
+            <div style="font-weight:600;margin-bottom:16px;color:var(--text)">📋 课程任务</div>
+            <!-- 二级菜单tabs -->
+            <div class="tabs" style="margin-bottom: 20px;">
+              <button id="tabHW" class="active">作业</button>
+              <button id="tabExam">考试</button>
+            </div>
+            
+            <!-- 作业内容 -->
+            <div id="viewHW" class="sub-view">
+              <div style="background:#fff7e6;padding:12px;border-radius:8px;border:1px solid #f59e0b;margin-bottom:16px">
+                <div style="font-weight:600;color:#b45309;margin-bottom:4px">📝 当前任务</div>
+                <div style="color:var(--text);font-size:13px">第6章导数练习 - 截止时间：12月20日 23:59</div>
+                <div style="margin-top:8px">
+                  <span style="background:#f59e0b;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">进行中</span>
+                  <span style="color:#b45309;font-size:12px;margin-left:8px">已完成任务点: 0/10</span>
+                </div>
+              </div>
+              
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div class="hw-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="color:var(--orange)">📋</div>
+                    <div style="flex:1">
+                      <div style="font-weight:600">第6章 导数运算</div>
+                      <div style="color:var(--muted);font-size:13px;margin-top:2px">截止：12-20 23:59 | 10个任务点</div>
+                    </div>
+                    <div style="color:var(--orange);font-size:12px;padding:2px 6px;background:#fff7e6;border-radius:4px">进行中</div>
+                  </div>
+                </div>
+                <div class="hw-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="color:var(--green)">✅</div>
+                    <div style="flex:1">
+                      <div style="font-weight:600">第5章 微分中值定理</div>
+                      <div style="color:var(--muted);font-size:13px;margin-top:2px">截止：12-15 23:59 | 8个任务点</div>
+                    </div>
+                    <div style="color:var(--green);font-size:12px;padding:2px 6px;background:#f0f9ff;border-radius:4px">已完成</div>
+                  </div>
+                </div>
+                <div class="hw-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="color:var(--green)">✅</div>
+                    <div style="flex:1">
+                      <div style="font-weight:600">第4章 函数的性质</div>
+                      <div style="color:var(--muted);font-size:13px;margin-top:2px">截止：12-10 23:59 | 6个任务点</div>
+                    </div>
+                    <div style="color:var(--green);font-size:12px;padding:2px 6px;background:#f0f9ff;border-radius:4px">已完成</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 考试内容 -->
+            <div id="viewExam" class="sub-view" style="display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="color:var(--muted)">筛选:</div>
+                <div style="display:flex;gap:8px">
+                  <label style="display:flex;align-items:center;gap:4px;font-size:13px">
+                    <input type="radio" name="examFilter" value="all" checked style="margin:0">
+                    全部
+                  </label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:13px">
+                    <input type="radio" name="examFilter" value="completed" style="margin:0">
+                    已完成
+                  </label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:13px">
+                    <input type="radio" name="examFilter" value="uncompleted" style="margin:0">
+                    未完成
+                  </label>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div class="exam-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <div style="color:var(--red)">📝</div>
+                      <div>
+                        <div style="font-weight:600">期末考试</div>
+                        <div style="color:var(--muted);font-size:13px;margin-top:2px">考试时间：12月25日 14:00-16:00</div>
+                      </div>
+                    </div>
+                    <div style="color:var(--muted);font-size:12px;padding:2px 6px;background:#f3f4f6;border-radius:4px">暂无考试</div>
+                  </div>
+                </div>
+                <div class="exam-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <div style="color:var(--orange)">📋</div>
+                      <div>
+                        <div style="font-weight:600">期中考试</div>
+                        <div style="color:var(--muted);font-size:13px;margin-top:2px">考试时间：11月20日 14:00-16:00</div>
+                      </div>
+                    </div>
+                    <div style="color:var(--orange);font-size:12px;padding:2px 6px;background:#fff7e6;border-radius:4px">待评分</div>
+                  </div>
+                </div>
+                <div class="exam-card" style="cursor:pointer">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <div style="color:var(--green)">✅</div>
+                      <div>
+                        <div style="font-weight:600">第一次月考</div>
+                        <div style="color:var(--muted);font-size:13px;margin-top:2px">考试时间：10月15日 14:00-16:00</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="color:var(--green);font-size:12px;padding:2px 6px;background:#f0f9ff;border-radius:4px">已完成</div>
+                      <div style="font-weight:600;color:var(--text)">85分</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 课程题库视图 -->
+
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const courseParam = params.get('course');
+    if (!courseParam) {
+      // 只有从课程列表进入（带有 course 参数）才允许访问
+      location.replace('index.html#courses');
+    }
+    document.getElementById('courseName').textContent = courseParam || '课程名称';
+
+    // 旧的顶级views已删除，现在只有子视图由专门的处理函数管理
+
+                    const sidebarViews = {
+          linkLearningRecord: 'viewLearningRecord',
+          linkChapterContent: 'viewChapterContent',
+          linkCourseTasks: 'viewCourseTasks'
+        };
+    
+
+    // 旧的tabs点击事件已删除，现在使用侧边栏导航
+
+    // 处理侧边栏菜单项点击事件
+    Object.keys(sidebarViews).forEach(id => {
+      document.getElementById(id).onclick = (e) => {
+        e.preventDefault();
+        // 切换视图
+        Object.values(sidebarViews).forEach(v => document.getElementById(v).style.display = 'none');
+        document.getElementById(sidebarViews[id]).style.display = '';
+        // 清除所有tabs的active状态（因为现在用侧边栏导航）
+        // 更新侧边栏菜单状态
+        document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+        e.target.classList.add('active');
+      };
+    });
+
+    document.getElementById('btnRandom')?.addEventListener('click', () => {
+      alert('开始随机练习错题（示例）');
+    });
+
+    // 设置“去当天回放”链接带课程参数
+    ['goRe1','goRe2','goRe3','goRe4','goRe5','goRe6'].forEach(id=>{
+      const a = document.getElementById(id);
+              if(a){ a.href = `liveroom_off.html?course=${encodeURIComponent(courseParam)}&mode=replay&from=detail`; }
+    });
+
+    // 处理学习记录子菜单切换
+    const learningSubViews = {
+      tabLog: 'viewLog',
+      tabProfile: 'viewProfile', 
+      tabWrong: 'viewWrong'
+    };
+
+    Object.keys(learningSubViews).forEach(tabId => {
+      const tabBtn = document.getElementById(tabId);
+      if (tabBtn) {
+        tabBtn.onclick = (e) => {
+          e.preventDefault();
+          // 隐藏所有学习记录的子视图
+          Object.values(learningSubViews).forEach(viewId => {
+            const view = document.getElementById(viewId);
+            if (view) view.style.display = 'none';
+          });
+          // 显示选中的子视图
+          const targetView = document.getElementById(learningSubViews[tabId]);
+          if (targetView) targetView.style.display = '';
+          
+          // 更新tab按钮状态
+          document.querySelectorAll('#viewLearningRecord .tabs button').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          tabBtn.classList.add('active');
+        };
+      }
+    });
+
+    // 处理课程任务子菜单切换
+    const taskSubViews = {
+      tabHW: 'viewHW',
+      tabExam: 'viewExam'
+    };
+
+    Object.keys(taskSubViews).forEach(tabId => {
+      const tabBtn = document.getElementById(tabId);
+      if (tabBtn) {
+        tabBtn.onclick = (e) => {
+          e.preventDefault();
+          // 隐藏所有课程任务的子视图
+          Object.values(taskSubViews).forEach(viewId => {
+            const view = document.getElementById(viewId);
+            if (view) view.style.display = 'none';
+          });
+          // 显示选中的子视图
+          const targetView = document.getElementById(taskSubViews[tabId]);
+          if (targetView) targetView.style.display = '';
+          
+          // 更新tab按钮状态
+          document.querySelectorAll('#viewCourseTasks .tabs button').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          tabBtn.classList.add('active');
+        };
+      }
+    });
+
+    // 个人中心和退出功能
+    function goToProfile() {
+      window.location.href = 'profile.html';
+    }
+
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        alert('已退出登录');
+        // 这里可以添加实际的退出逻辑
+        // window.location.href = 'login.html';
+      }
+    }
+
+    // 题目筛选功能
+    function filterQuestions(type) {
+      const questionCards = document.querySelectorAll('.wrong-card');
+      const questionCount = document.getElementById('questionCount');
+      let visibleCount = 0;
+
+      questionCards.forEach(card => {
+        if (type === 'all' || card.getAttribute('data-type') === type) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // 更新题目数量显示
+      if (questionCount) {
+        questionCount.textContent = visibleCount;
+      }
+
+      // 更新筛选按钮状态
+      document.querySelectorAll('.question-filter').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#fff';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--text)';
+      });
+
+      const activeBtn = document.querySelector(`.question-filter[data-type="${type}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = 'var(--primary)';
+        activeBtn.style.borderColor = 'var(--primary)';
+        activeBtn.style.color = '#fff';
+      }
+    }
+
+    // 绑定筛选按钮事件
+    document.addEventListener('DOMContentLoaded', function() {
+      const filterButtons = document.querySelectorAll('.question-filter');
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const type = this.getAttribute('data-type');
+          filterQuestions(type);
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+

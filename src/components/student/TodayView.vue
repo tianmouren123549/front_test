@@ -244,12 +244,17 @@
 }
 
 .todo-item.urgent {
-  border-left: 4px solid #ef4444;
-  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
 }
 
 .todo-item.normal {
   border-left: 4px solid #3b82f6;
+}
+
+.todo-item.overdue {
+  border-left: 4px solid #dc2626;
+  background: linear-gradient(135deg, #fef2f2, #fecaca);
 }
 
 .todo-item.completed {
@@ -257,18 +262,26 @@
   opacity: 0.7;
 }
 
-.todo-item.completed label {
+.todo-item.completed .todo-label {
   text-decoration: line-through;
   color: #6b7280;
+}
+
+.todo-item.overdue .todo-label {
+  color: #991b1b;
 }
 
 .todo-checkbox {
   cursor: pointer;
 }
 
+.todo-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .todo-label {
   flex: 1;
-  cursor: pointer;
   font-size: 14px;
   color: #1f2937;
 }
@@ -280,7 +293,12 @@
 }
 
 .todo-item.urgent .todo-deadline {
-  color: #ef4444;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.todo-item.overdue .todo-deadline {
+  color: #dc2626;
   font-weight: 600;
 }
 
@@ -323,7 +341,7 @@
 </style>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue';
+import { ref, inject, onMounted, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const switchView = inject('switchView');
@@ -359,71 +377,101 @@ onMounted(() => {
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取真实数据
 // API接口: GET /api/student/today-schedule
+// 对应数据库表：class_session, edu_course, sys_user, edu_classroom
 
 // 今日课程
 const todayCourses = ref([
   {
-    time: '08:00 - 09:40',
-    name: '高等数学',
-    status: 'done',
-    statusText: '已完成',
-    location: '数学楼A301',
-    teacher: '王老师',
+    session_id: 3001, // class_session.session_id
+    course_id: 601, // edu_course.course_id
+    course_name: '高等数学', // edu_course.course_name
+    teacher_id: 211, // edu_teacher.teacher_id
+    teacher_name: '王老师', // sys_user.real_name
+    classroom_id: 301, // edu_classroom.classroom_id
+    classroom_name: '数学楼A301', // edu_classroom.building + classroom_name
+    start_time: '2025-01-15 08:00:00', // class_session.start_time（DATETIME）
+    end_time: '2025-01-15 09:40:00', // class_session.end_time（DATETIME）
+    status: 'ENDED', // class_session.status（ENUM: 'NOT_STARTED','ONGOING','ENDED'）
   },
   {
-    time: '10:00 - 11:40',
-    name: '线性代数',
-    status: 'ongoing',
-    statusText: '进行中',
-    location: '数学楼B205',
-    teacher: '李老师',
+    session_id: 3002,
+    course_id: 604,
+    course_name: '线性代数',
+    teacher_id: 214,
+    teacher_name: '李老师',
+    classroom_id: 302,
+    classroom_name: '数学楼B205',
+    start_time: '2025-01-15 10:00:00',
+    end_time: '2025-01-15 11:40:00',
+    status: 'ONGOING',
   },
   {
-    time: '14:00 - 15:40',
-    name: '概率论与数理统计',
-    status: 'coming',
-    statusText: '未开始',
-    location: '数学楼C102',
-    teacher: '张老师',
+    session_id: 3003,
+    course_id: 611,
+    course_name: '概率论与数理统计',
+    teacher_id: 221,
+    teacher_name: '张老师',
+    classroom_id: 303,
+    classroom_name: '数学楼C102',
+    start_time: '2025-01-15 14:00:00',
+    end_time: '2025-01-15 15:40:00',
+    status: 'NOT_STARTED',
   },
 ]);
 
 // 待办事项
+// 对应数据库表：sys_todo
 const todoItems = ref([
   {
-    id: 1,
-    text: '完成高等数学作业',
-    deadline: '明天截止',
-    urgent: true,
-    completed: false,
+    todo_id: 4001, // sys_todo.todo_id
+    user_id: 1001, // sys_todo.user_id
+    title: '完成高等数学作业', // sys_todo.title
+    content: '第三章习题 1-20题', // sys_todo.content
+    todo_type: 'TEACHING', // sys_todo.todo_type（ENUM）
+    priority: 'HIGH', // sys_todo.priority（ENUM: 'LOW','MEDIUM','HIGH'）
+    deadline: '2025-10-16 23:59:00', // sys_todo.deadline（DATETIME）
+    is_completed: 0, // sys_todo.is_completed（0-未完成，1-已完成）
   },
   {
-    id: 2,
-    text: '预习线性代数第三章',
-    deadline: '3天后',
-    urgent: false,
-    completed: false,
+    todo_id: 4002,
+    user_id: 1001,
+    title: '预习线性代数第三章',
+    content: '矩阵运算和行列式',
+    todo_type: 'TEACHING',
+    priority: 'MEDIUM',
+    deadline: '2025-10-12 23:59:00',
+    is_completed: 0,
   },
   {
-    id: 3,
-    text: '提交实验报告',
-    deadline: '本周内',
-    urgent: false,
-    completed: false,
+    todo_id: 4003,
+    user_id: 1001,
+    title: '提交实验报告',
+    content: 'Java Web实验三',
+    todo_type: 'TEACHING',
+    priority: 'MEDIUM',
+    deadline: '2025-10-15 23:59:00',
+    is_completed: 0,
   },
   {
-    id: 4,
-    text: '复习概率论重点',
-    deadline: '周五前',
-    urgent: false,
-    completed: false,
+    todo_id: 4004,
+    user_id: 1001,
+    title: '复习概率论重点',
+    content: '大数定律和中心极限定理',
+    todo_type: 'TEACHING',
+    priority: 'MEDIUM',
+    deadline: '2025-10-14 23:59:00',
+    is_completed: 0,
   },
   {
-    id: 5,
-    text: '观看数据结构课程回放',
-    deadline: '已完成',
-    urgent: false,
-    completed: true,
+    todo_id: 4005,
+    user_id: 1001,
+    title: '观看数据结构课程回放',
+    content: '第五章 树和二叉树',
+    todo_type: 'TEACHING',
+    priority: 'LOW',
+    deadline: '2025-01-14 23:59:00',
+    is_completed: 1,
+    complete_time: '2025-01-14 20:30:00', // sys_todo.complete_time
   },
 ]);
 // ==================== 🔴 模拟数据 END ====================
@@ -446,12 +494,87 @@ const handleAddTodo = () => {
   ElMessage.info('添加待办事项功能开发中');
 };
 
+// 判断是否已截止
+const isOverdue = deadline => {
+  const date = new Date(deadline);
+  const now = new Date();
+  return date < now;
+};
+
 // 切换待办状态
 const toggleTodo = todo => {
-  todo.completed = !todo.completed;
-  if (todo.completed) {
-    todo.deadline = '已完成';
+  // 已截止的事项不能更改状态
+  if (isOverdue(todo.deadline) && todo.is_completed === 0) {
+    ElMessage.warning('已截止的待办事项无法更改状态');
+    return;
   }
+
+  todo.is_completed = todo.is_completed === 1 ? 0 : 1;
+  if (todo.is_completed === 1) {
+    todo.complete_time = new Date().toISOString();
+  } else {
+    todo.complete_time = null;
+  }
+};
+
+// 排序后的待办事项（用于前端显示）
+// 排序规则：未完成（未截止） -> 未完成（已截止） -> 已完成
+const sortedTodoItems = computed(() => {
+  return [...todoItems.value].sort((a, b) => {
+    // 已完成的排在最后
+    if (a.is_completed !== b.is_completed) {
+      return a.is_completed - b.is_completed;
+    }
+
+    // 都是未完成的，已截止的排在未截止的后面
+    if (a.is_completed === 0) {
+      const aOverdue = isOverdue(a.deadline);
+      const bOverdue = isOverdue(b.deadline);
+      if (aOverdue !== bOverdue) {
+        return aOverdue ? 1 : -1;
+      }
+    }
+
+    // 相同状态按截止时间排序
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+});
+
+// 格式化时间显示（用于前端显示）
+const formatDeadline = deadline => {
+  const date = new Date(deadline);
+  const now = new Date();
+  const diff = date - now;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days < 0) return '已截止';
+  if (days === 0) return '今天截止';
+  if (days === 1) return '明天截止';
+  if (days <= 7) return `${days}天后`;
+  return date.toLocaleDateString();
+};
+
+// 获取课程状态文本（用于前端显示）
+const getStatusText = status => {
+  const statusMap = {
+    ENDED: '已完成',
+    ONGOING: '进行中',
+    NOT_STARTED: '未开始',
+  };
+  return statusMap[status] || status;
+};
+
+// 格式化时间范围（用于前端显示）
+const formatTimeRange = (start, end) => {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  return `${startTime.getHours().toString().padStart(2, '0')}:${startTime
+    .getMinutes()
+    .toString()
+    .padStart(2, '0')} - ${endTime
+    .getHours()
+    .toString()
+    .padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
 };
 </script>
 
@@ -503,20 +626,38 @@ const toggleTodo = todo => {
           <div class="course-timeline">
             <div
               v-for="course in todayCourses"
-              :key="course.time"
-              :class="['course-item', course.status]"
+              :key="course.session_id"
+              :class="[
+                'course-item',
+                course.status === 'ENDED'
+                  ? 'completed'
+                  : course.status === 'ONGOING'
+                    ? 'current'
+                    : 'upcoming',
+              ]"
             >
-              <div class="course-time">{{ course.time }}</div>
+              <div class="course-time">
+                {{ formatTimeRange(course.start_time, course.end_time) }}
+              </div>
               <div class="course-info">
                 <div class="course-title">
-                  <span class="course-name">{{ course.name }}</span>
-                  <span :class="['course-status', course.status]">
-                    {{ course.statusText }}
+                  <span class="course-name">{{ course.course_name }}</span>
+                  <span
+                    :class="[
+                      'course-status',
+                      course.status === 'ENDED'
+                        ? 'done'
+                        : course.status === 'ONGOING'
+                          ? 'ongoing'
+                          : 'coming',
+                    ]"
+                  >
+                    {{ getStatusText(course.status) }}
                   </span>
                 </div>
                 <div class="course-details">
-                  <span>🏢 {{ course.location }}</span>
-                  <span>🧑‍🏫 {{ course.teacher }}</span>
+                  <span>🏢 {{ course.classroom_name }}</span>
+                  <span>🧑‍🏫 {{ course.teacher_name }}</span>
                 </div>
               </div>
             </div>
@@ -535,26 +676,41 @@ const toggleTodo = todo => {
 
           <div class="todo-list">
             <div
-              v-for="todo in todoItems"
-              :key="todo.id"
+              v-for="todo in sortedTodoItems"
+              :key="todo.todo_id"
               :class="[
                 'todo-item',
-                { urgent: todo.urgent && !todo.completed },
-                { normal: !todo.urgent && !todo.completed },
-                { completed: todo.completed },
+                {
+                  urgent:
+                    todo.priority === 'HIGH' &&
+                    todo.is_completed === 0 &&
+                    !isOverdue(todo.deadline),
+                  normal:
+                    todo.priority !== 'HIGH' &&
+                    todo.is_completed === 0 &&
+                    !isOverdue(todo.deadline),
+                  overdue: isOverdue(todo.deadline) && todo.is_completed === 0,
+                  completed: todo.is_completed === 1,
+                },
               ]"
             >
               <input
                 type="checkbox"
-                :id="`todo-${todo.id}`"
-                v-model="todo.completed"
+                :checked="todo.is_completed === 1"
+                :disabled="isOverdue(todo.deadline) && todo.is_completed === 0"
                 class="todo-checkbox"
                 @change="toggleTodo(todo)"
               />
-              <label :for="`todo-${todo.id}`" class="todo-label">
-                {{ todo.text }}
-              </label>
-              <span class="todo-deadline">{{ todo.deadline }}</span>
+              <div class="todo-label">
+                {{ todo.title }}
+              </div>
+              <span class="todo-deadline">
+                {{
+                  todo.is_completed === 1
+                    ? '已完成'
+                    : formatDeadline(todo.deadline)
+                }}
+              </span>
             </div>
           </div>
         </div>

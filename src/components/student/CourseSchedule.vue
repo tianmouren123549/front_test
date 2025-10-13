@@ -457,168 +457,383 @@ const handleWeekSelect = week => {
 // 初始化周数
 updateVisibleWeeks();
 
-// 课程数据（模拟数据）
+// ==================== 🔴 模拟数据 START ====================
+// TODO: 后续需要从后端API获取课表数据
+// API接口: GET /api/student/schedule?semesterId=xxx&week=xxx
+// 对应数据库表：edu_course_offering, edu_course, sys_user, edu_teacher, edu_classroom
+
+// 课程数据
 const courses = ref([
   {
-    day: 1,
-    period: 1,
-    name: '计算机网络',
-    teacher: '孔老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1001, // edu_course_offering.offering_id
+    course_id: 501, // edu_course.course_id
+    course_name: '计算机网络', // edu_course.course_name
+    teacher_id: 201, // edu_teacher.teacher_id
+    teacher_name: '孔老师', // sys_user.real_name（冗余字段，便于显示）
+    week_day: 1, // edu_course_offering.week_day（1-7，周一到周日）
+    start_period: 1, // edu_course_offering.start_period（节次）
+    end_period: 2, // edu_course_offering.end_period
+    classroom_id: 301, // edu_classroom.classroom_id
+    classroom_name: 'A301', // edu_classroom.classroom_name（冗余字段）
   },
   {
-    day: 1,
-    period: 4,
-    name: '软件工程',
-    teacher: '刘老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1002,
+    course_id: 502,
+    course_name: '软件工程',
+    teacher_id: 202,
+    teacher_name: '刘老师',
+    week_day: 1,
+    start_period: 4,
+    end_period: 5,
+    classroom_id: 302,
+    classroom_name: 'B205',
   },
   {
-    day: 2,
-    period: 1,
-    name: '软件工程',
-    teacher: '刘老师',
-    status: 'upcoming',
-    icon: '🔴',
+    offering_id: 1003,
+    course_id: 502,
+    course_name: '软件工程',
+    teacher_id: 202,
+    teacher_name: '刘老师',
+    week_day: 2,
+    start_period: 1,
+    end_period: 2,
+    classroom_id: 303,
+    classroom_name: 'A201',
   },
   {
-    day: 2,
-    period: 5,
-    name: 'MVVM框架',
-    teacher: '熊老师',
-    status: 'upcoming',
-    icon: '🔴',
+    offering_id: 1004,
+    course_id: 503,
+    course_name: 'MVVM框架',
+    teacher_id: 203,
+    teacher_name: '熊老师',
+    week_day: 2,
+    start_period: 5,
+    end_period: 5,
+    classroom_id: 304,
+    classroom_name: 'C102',
   },
   {
-    day: 3,
-    period: 1,
-    name: 'Java Web高级',
-    teacher: '各老师',
-    status: 'done',
-    icon: '✓',
+    offering_id: 1005,
+    course_id: 504,
+    course_name: 'Java Web高级',
+    teacher_id: 204,
+    teacher_name: '各老师',
+    week_day: 3,
+    start_period: 1,
+    end_period: 2,
+    classroom_id: 305,
+    classroom_name: 'A301',
   },
   {
-    day: 3,
-    period: 3,
-    name: '数学建模',
-    teacher: '丁老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1006,
+    course_id: 505,
+    course_name: '数学建模',
+    teacher_id: 205,
+    teacher_name: '丁老师',
+    week_day: 3,
+    start_period: 3,
+    end_period: 4,
+    classroom_id: 306,
+    classroom_name: 'B301',
   },
   {
-    day: 3,
-    period: 5,
-    name: '软件设计',
-    teacher: '刘老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1007,
+    course_id: 506,
+    course_name: '软件设计',
+    teacher_id: 202,
+    teacher_name: '刘老师',
+    week_day: 3,
+    start_period: 5,
+    end_period: 5,
+    classroom_id: 307,
+    classroom_name: 'C201',
   },
   {
-    day: 4,
-    period: 1,
-    name: 'Java反射',
-    teacher: '罗老师',
-    status: 'done',
-    icon: '✓',
+    offering_id: 1008,
+    course_id: 507,
+    course_name: 'Java反射',
+    teacher_id: 206,
+    teacher_name: '罗老师',
+    week_day: 4,
+    start_period: 1,
+    end_period: 2,
+    classroom_id: 308,
+    classroom_name: 'A302',
   },
   {
-    day: 4,
-    period: 5,
-    name: 'Docker容器',
-    teacher: '罗老师',
-    status: 'upcoming',
-    icon: '🔴',
+    offering_id: 1009,
+    course_id: 508,
+    course_name: 'Docker容器',
+    teacher_id: 206,
+    teacher_name: '罗老师',
+    week_day: 4,
+    start_period: 5,
+    end_period: 5,
+    classroom_id: 309,
+    classroom_name: 'B401',
   },
   {
-    day: 5,
-    period: 1,
-    name: '计算机网络',
-    teacher: '孔老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1010,
+    course_id: 501,
+    course_name: '计算机网络',
+    teacher_id: 201,
+    teacher_name: '孔老师',
+    week_day: 5,
+    start_period: 1,
+    end_period: 2,
+    classroom_id: 301,
+    classroom_name: 'A301',
   },
   {
-    day: 6,
-    period: 3,
-    name: '软件设计',
-    teacher: '刘老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1011,
+    course_id: 506,
+    course_name: '软件设计',
+    teacher_id: 202,
+    teacher_name: '刘老师',
+    week_day: 6,
+    start_period: 3,
+    end_period: 4,
+    classroom_id: 307,
+    classroom_name: 'C201',
   },
   {
-    day: 7,
-    period: 3,
-    name: 'MVVM框架',
-    teacher: '熊老师',
-    status: 'not-started',
-    icon: '⏸',
+    offering_id: 1012,
+    course_id: 503,
+    course_name: 'MVVM框架',
+    teacher_id: 203,
+    teacher_name: '熊老师',
+    week_day: 7,
+    start_period: 3,
+    end_period: 4,
+    classroom_id: 304,
+    classroom_name: 'C102',
   },
   {
-    day: 7,
-    period: 5,
-    name: 'Docker容器',
-    teacher: '罗老师',
-    status: 'upcoming',
-    icon: '🔴',
+    offering_id: 1013,
+    course_id: 508,
+    course_name: 'Docker容器',
+    teacher_id: 206,
+    teacher_name: '罗老师',
+    week_day: 7,
+    start_period: 5,
+    end_period: 5,
+    classroom_id: 309,
+    classroom_name: 'B401',
   },
 ]);
+// ==================== 🔴 模拟数据 END ====================
+
+// ==================== 🔴 模拟数据 START ====================
+// TODO: 后续需要从后端API获取选课列表
+// API接口: GET /api/student/courses
+// 对应数据库表：edu_student_course, edu_course, edu_class, sys_user
 
 // 课程列表数据
 const courseList = ref([
   {
-    name: '高等数学（上）',
-    grade: '2025级',
-    class: '数学一班',
-    teacher: '王老师',
-  },
-  { name: '大学物理', grade: '2025级', class: '物理二班', teacher: '李老师' },
-  { name: '计算机导论', grade: '2025级', class: '计科一班', teacher: '赵老师' },
-  { name: '线性代数', grade: '2025级', class: '数学一班', teacher: '孙老师' },
-  {
-    name: '英语（综合）',
-    grade: '2025级',
-    class: '外语一班',
-    teacher: '陈老师',
+    enrollment_id: 2001, // edu_student_course.enrollment_id
+    course_id: 601, // edu_course.course_id
+    course_code: 'MATH101', // edu_course.course_code
+    course_name: '高等数学（上）', // edu_course.course_name
+    class_id: 101, // edu_class.class_id
+    class_name: '数学一班', // edu_class.class_name
+    grade: 2025, // edu_class.grade
+    teacher_id: 211, // edu_teacher.teacher_id
+    teacher_name: '王老师', // sys_user.real_name
+    credit: 4.0, // edu_course.credit（学分）
+    course_type: 'COMPULSORY', // edu_course.course_type（必修）
   },
   {
-    name: '思想道德与法治',
-    grade: '2025级',
-    class: '公共课',
-    teacher: '周老师',
+    enrollment_id: 2002,
+    course_id: 602,
+    course_code: 'PHYS101',
+    course_name: '大学物理',
+    class_id: 102,
+    class_name: '物理二班',
+    grade: 2025,
+    teacher_id: 212,
+    teacher_name: '李老师',
+    credit: 3.5,
+    course_type: 'COMPULSORY',
   },
   {
-    name: '程序设计基础',
-    grade: '2025级',
-    class: '计科一班',
-    teacher: '刘老师',
+    enrollment_id: 2003,
+    course_id: 603,
+    course_code: 'CS101',
+    course_name: '计算机导论',
+    class_id: 103,
+    class_name: '计科一班',
+    grade: 2025,
+    teacher_id: 213,
+    teacher_name: '赵老师',
+    credit: 3.0,
+    course_type: 'COMPULSORY',
   },
-  { name: '大学英语', grade: '2025级', class: '外语一班', teacher: '张老师' },
-  { name: '数据结构', grade: '2025级', class: '计科一班', teacher: '钱老师' },
-  { name: '操作系统', grade: '2025级', class: '计科一班', teacher: '吴老师' },
   {
-    name: '概率论与数理统计',
-    grade: '2025级',
-    class: '数学一班',
-    teacher: '郑老师',
+    enrollment_id: 2004,
+    course_id: 604,
+    course_code: 'MATH102',
+    course_name: '线性代数',
+    class_id: 101,
+    class_name: '数学一班',
+    grade: 2025,
+    teacher_id: 214,
+    teacher_name: '孙老师',
+    credit: 3.0,
+    course_type: 'COMPULSORY',
   },
-  { name: '数据库原理', grade: '2025级', class: '计科一班', teacher: '陈老师' },
+  {
+    enrollment_id: 2005,
+    course_id: 605,
+    course_code: 'ENG101',
+    course_name: '英语（综合）',
+    class_id: 104,
+    class_name: '外语一班',
+    grade: 2025,
+    teacher_id: 215,
+    teacher_name: '陈老师',
+    credit: 4.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2006,
+    course_id: 606,
+    course_code: 'POL101',
+    course_name: '思想道德与法治',
+    class_id: 105,
+    class_name: '公共课',
+    grade: 2025,
+    teacher_id: 216,
+    teacher_name: '周老师',
+    credit: 3.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2007,
+    course_id: 607,
+    course_code: 'CS102',
+    course_name: '程序设计基础',
+    class_id: 103,
+    class_name: '计科一班',
+    grade: 2025,
+    teacher_id: 217,
+    teacher_name: '刘老师',
+    credit: 4.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2008,
+    course_id: 608,
+    course_code: 'ENG102',
+    course_name: '大学英语',
+    class_id: 104,
+    class_name: '外语一班',
+    grade: 2025,
+    teacher_id: 218,
+    teacher_name: '张老师',
+    credit: 4.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2009,
+    course_id: 609,
+    course_code: 'CS201',
+    course_name: '数据结构',
+    class_id: 103,
+    class_name: '计科一班',
+    grade: 2025,
+    teacher_id: 219,
+    teacher_name: '钱老师',
+    credit: 4.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2010,
+    course_id: 610,
+    course_code: 'CS202',
+    course_name: '操作系统',
+    class_id: 103,
+    class_name: '计科一班',
+    grade: 2025,
+    teacher_id: 220,
+    teacher_name: '吴老师',
+    credit: 3.5,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2011,
+    course_id: 611,
+    course_code: 'MATH201',
+    course_name: '概率论与数理统计',
+    class_id: 101,
+    class_name: '数学一班',
+    grade: 2025,
+    teacher_id: 221,
+    teacher_name: '郑老师',
+    credit: 3.0,
+    course_type: 'COMPULSORY',
+  },
+  {
+    enrollment_id: 2012,
+    course_id: 612,
+    course_code: 'CS203',
+    course_name: '数据库原理',
+    class_id: 103,
+    class_name: '计科一班',
+    grade: 2025,
+    teacher_id: 222,
+    teacher_name: '陈老师',
+    credit: 3.5,
+    course_type: 'COMPULSORY',
+  },
 ]);
+// ==================== 🔴 模拟数据 END ====================
 
 // 获取课程（根据星期和节次）
 const getCourse = (day, period) => {
-  return courses.value.find(c => c.day === day && c.period === period);
+  return courses.value.find(
+    c => c.week_day === day && c.start_period === period
+  );
 };
 
-// 点击课程
+// 计算课程状态（用于前端显示，不存储在数据库）
+const getCourseStatus = course => {
+  // TODO: 根据 class_session 表的数据判断课程状态
+  // 这里暂时返回模拟状态用于显示
+  const now = new Date();
+  const currentDay = now.getDay() || 7; // 周日为7
+  const currentHour = now.getHours();
+
+  if (course.week_day < currentDay) return 'done';
+  if (course.week_day > currentDay) return 'not-started';
+
+  // 当天的课程根据时间判断
+  const periodStartHours = [8, 10, 14, 16, 19];
+  const startHour = periodStartHours[course.start_period - 1] || 8;
+
+  if (currentHour < startHour) return 'upcoming';
+  if (currentHour >= startHour + 2) return 'done';
+  return 'upcoming';
+};
+
+// 获取课程图标（用于前端显示）
+const getCourseIcon = status => {
+  const icons = {
+    done: '✓',
+    upcoming: '🔴',
+    'not-started': '⏸',
+  };
+  return icons[status] || '⏸';
+};
+
+// 点击课程（课表视图）
 const handleCourseClick = course => {
-  ElMessage.info(`课程详情功能开发中：${course.name}`);
+  ElMessage.info(`课程详情功能开发中：${course.course_name}`);
 };
 
-// 点击课程卡片
+// 点击课程卡片（课程列表视图）
 const handleCourseCardClick = course => {
-  ElMessage.info(`课程详情功能开发中：${course.name}`);
+  ElMessage.info(`课程详情功能开发中：${course.course_name}`);
 };
 </script>
 
@@ -759,7 +974,7 @@ const handleCourseCardClick = course => {
               v-if="getCourse(day, period)"
               :class="[
                 'schedule-cell',
-                `course-${getCourse(day, period).status}`,
+                `course-${getCourseStatus(getCourse(day, period))}`,
               ]"
               :style="{
                 gridColumn: day + 1,
@@ -768,12 +983,14 @@ const handleCourseCardClick = course => {
               @click="handleCourseClick(getCourse(day, period))"
             >
               <div class="course-content">
-                <div class="course-name">{{ getCourse(day, period).name }}</div>
+                <div class="course-name">
+                  {{ getCourse(day, period).course_name }}
+                </div>
                 <div class="teacher-name">
-                  {{ getCourse(day, period).teacher }}
+                  {{ getCourse(day, period).teacher_name }}
                 </div>
                 <span class="status-icon">{{
-                  getCourse(day, period).icon
+                  getCourseIcon(getCourseStatus(getCourse(day, period)))
                 }}</span>
               </div>
             </div>
@@ -793,17 +1010,18 @@ const handleCourseCardClick = course => {
     <!-- 课程列表视图 -->
     <div v-else class="course-list">
       <div
-        v-for="(course, index) in courseList"
-        :key="index"
+        v-for="course in courseList"
+        :key="course.enrollment_id"
         class="course-card"
         @click="handleCourseCardClick(course)"
       >
         <div class="course-placeholder"></div>
-        <h4>{{ course.name }}</h4>
+        <h4>{{ course.course_name }}</h4>
         <div class="course-meta">
-          年级/班级：{{ course.grade }} {{ course.class }}
+          年级/班级：{{ course.grade }}级 {{ course.class_name }}
         </div>
-        <div class="course-meta">任课老师：{{ course.teacher }}</div>
+        <div class="course-meta">任课老师：{{ course.teacher_name }}</div>
+        <div class="course-meta">学分：{{ course.credit }}</div>
       </div>
     </div>
   </div>

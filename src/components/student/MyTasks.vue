@@ -145,41 +145,54 @@ const currentFilter = ref('all');
 
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取真实数据
-// API接口: GET /api/student/tasks
+// API接口: GET /api/student/assignments
+// 对应数据库表：eval_assignment, eval_submission
 
 // 作业清单
 const taskList = ref([
   {
-    id: 1,
-    title: '实验作业：设计模式综合',
-    deadline: '周五 23:00',
-    points: 100,
-    status: 'pending',
-    statusText: '未完成',
+    assignment_id: 5001, // eval_assignment.assignment_id
+    submission_id: 6001, // eval_submission.submission_id（如果已提交）
+    title: '实验作业：设计模式综合', // eval_assignment.title
+    course_id: 607, // eval_assignment.course_id
+    teacher_id: 217, // eval_assignment.teacher_id
+    end_time: '2025-01-17 23:00:00', // eval_assignment.end_time（DATETIME）
+    total_score: 100, // eval_assignment.total_score
+    assignment_type: 'EXPERIMENT', // eval_assignment.assignment_type
+    status: 'NOT_SUBMITTED', // eval_submission.status
   },
   {
-    id: 2,
+    assignment_id: 5002,
+    submission_id: null,
     title: '编程作业：Java Web应用开发',
-    deadline: '周日 23:59',
-    points: 80,
-    status: 'pending',
-    statusText: '未完成',
+    course_id: 607,
+    teacher_id: 217,
+    end_time: '2025-01-19 23:59:00',
+    total_score: 80,
+    assignment_type: 'REGULAR',
+    status: 'NOT_SUBMITTED',
   },
   {
-    id: 3,
+    assignment_id: 5003,
+    submission_id: 6002,
     title: '随堂练习：行为型模式',
-    deadline: '今日 24:00',
-    points: 10,
-    status: 'completed',
-    statusText: '已完成',
+    course_id: 607,
+    teacher_id: 217,
+    end_time: '2025-01-15 24:00:00',
+    total_score: 10,
+    assignment_type: 'REGULAR',
+    status: 'GRADED', // 已批改
   },
   {
-    id: 4,
+    assignment_id: 5004,
+    submission_id: 6003,
     title: '课堂测验：数据结构基础',
-    deadline: '昨日 18:00',
-    points: 50,
-    status: 'completed',
-    statusText: '已完成',
+    course_id: 609,
+    teacher_id: 219,
+    end_time: '2025-01-14 18:00:00',
+    total_score: 50,
+    assignment_type: 'REGULAR',
+    status: 'GRADED',
   },
 ]);
 // ==================== 🔴 模拟数据 END ====================
@@ -189,8 +202,47 @@ const filteredTaskList = computed(() => {
   if (currentFilter.value === 'all') {
     return taskList.value;
   }
-  return taskList.value.filter(item => item.status === currentFilter.value);
+  if (currentFilter.value === 'pending') {
+    return taskList.value.filter(
+      item => item.status === 'NOT_SUBMITTED' || item.status === 'SUBMITTED'
+    );
+  }
+  if (currentFilter.value === 'completed') {
+    return taskList.value.filter(
+      item => item.status === 'GRADED' || item.status === 'RETURNED'
+    );
+  }
+  return taskList.value;
 });
+
+// 格式化截止时间（用于前端显示）
+const formatDeadline = endTime => {
+  const date = new Date(endTime);
+  const now = new Date();
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+  if (date < now) {
+    return `已截止 ${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  const weekday = weekdays[date.getDay()];
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `周${weekday} ${hours}:${minutes}`;
+};
+
+// 获取状态文本（用于前端显示）
+const getStatusText = status => {
+  const statusMap = {
+    NOT_SUBMITTED: '未完成',
+    SUBMITTED: '已提交',
+    GRADING: '批改中',
+    GRADED: '已完成',
+    RETURNED: '已完成',
+  };
+  return statusMap[status] || status;
+};
 
 // 切换筛选器
 const setFilter = filter => {
@@ -231,25 +283,27 @@ const handleTaskClick = task => {
     <div class="task-list">
       <div
         v-for="task in filteredTaskList"
-        :key="task.id"
+        :key="task.assignment_id"
         class="task-item"
         @click="handleTaskClick(task)"
       >
         <div class="task-item-content">
           <div class="task-title">{{ task.title }}</div>
           <div class="task-meta">
-            <span>截止 {{ task.deadline }}</span>
+            <span>截止 {{ formatDeadline(task.end_time) }}</span>
             <span>·</span>
-            <span>{{ task.points }}分</span>
+            <span>{{ task.total_score }}分</span>
           </div>
         </div>
         <span
           :class="[
             'task-status',
-            task.status === 'pending' ? 'status-pending' : 'status-completed',
+            task.status === 'NOT_SUBMITTED' || task.status === 'SUBMITTED'
+              ? 'status-pending'
+              : 'status-completed',
           ]"
         >
-          {{ task.statusText }}
+          {{ getStatusText(task.status) }}
         </span>
       </div>
     </div>

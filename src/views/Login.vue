@@ -246,7 +246,13 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { User, Lock, ArrowLeft, Phone, Postcard } from '@element-plus/icons-vue';
+import {
+  User,
+  Lock,
+  ArrowLeft,
+  Phone,
+  Postcard,
+} from '@element-plus/icons-vue';
 
 const router = useRouter();
 
@@ -318,7 +324,11 @@ const validateConfirmPassword = (rule, value, callback) => {
 // 注册表单验证规则
 const registerRules = {
   username: [
-    { required: true, message: '请输入' + registerUsernameLabel.value, trigger: 'blur' },
+    {
+      required: true,
+      message: '请输入' + registerUsernameLabel.value,
+      trigger: 'blur',
+    },
     { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' },
   ],
   name: [
@@ -327,7 +337,11 @@ const registerRules = {
   ],
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: '请输入正确的手机号',
+      trigger: 'blur',
+    },
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -715,7 +729,11 @@ if (rememberedUser && rememberedRole) {
       <!-- 对话框底部按钮 -->
       <template #footer>
         <div class="register-form-footer">
-          <el-button class="cancel-btn" size="large" @click="closeRegisterDialog">
+          <el-button
+            class="cancel-btn"
+            size="large"
+            @click="closeRegisterDialog"
+          >
             取消
           </el-button>
           <el-button

@@ -151,37 +151,68 @@ const currentFilter = ref('all');
 
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取真实数据
-// API接口: GET /api/student/inbox
+// API接口: GET /api/student/messages
+// 对应数据库表：stu_message
 
 // 收件箱消息
 const inboxList = ref([
   {
-    id: 1,
-    title: '作业提醒',
-    description: '请在周五 23:00 前提交"设计模式综合"',
-    status: 'unread',
-    statusText: '未读',
+    message_id: 7001, // stu_message.message_id
+    student_id: 1001, // stu_message.student_id
+    sender_id: 217, // stu_message.sender_id
+    sender_type: 'TEACHER', // stu_message.sender_type（ENUM: 'SYSTEM','TEACHER','ADMIN'）
+    message_type: 'HOMEWORK', // stu_message.message_type（ENUM: 'NOTIFICATION','HOMEWORK','SCORE','REMINDER'）
+    title: '作业提醒', // stu_message.title
+    content: '请在周五 23:00 前提交"设计模式综合"', // stu_message.content
+    priority: 'IMPORTANT', // stu_message.priority（ENUM: 'NORMAL','IMPORTANT','URGENT'）
+    is_read: 0, // stu_message.is_read（0-未读，1-已读）
+    send_time: '2025-01-15 08:00:00', // stu_message.send_time（DATETIME）
+    related_type: 'HOMEWORK', // stu_message.related_type
+    related_id: 5001, // stu_message.related_id
   },
   {
-    id: 2,
+    message_id: 7002,
+    student_id: 1001,
+    sender_id: 217,
+    sender_type: 'TEACHER',
+    message_type: 'NOTIFICATION',
     title: '老师通知',
-    description: '周三 8:30 上课时间调整为 8:50',
-    status: 'read',
-    statusText: '已读',
+    content: '周三 8:30 上课时间调整为 8:50',
+    priority: 'NORMAL',
+    is_read: 1,
+    read_time: '2025-01-14 20:30:00', // stu_message.read_time
+    send_time: '2025-01-14 18:00:00',
+    related_type: null,
+    related_id: null,
   },
   {
-    id: 3,
+    message_id: 7003,
+    student_id: 1001,
+    sender_id: null,
+    sender_type: 'SYSTEM',
+    message_type: 'HOMEWORK',
     title: '系统通知',
-    description: '您有新的编程作业待完成，请及时查看',
-    status: 'unread',
-    statusText: '未读',
+    content: '您有新的编程作业待完成，请及时查看',
+    priority: 'NORMAL',
+    is_read: 0,
+    send_time: '2025-01-15 10:00:00',
+    related_type: 'HOMEWORK',
+    related_id: 5002,
   },
   {
-    id: 4,
+    message_id: 7004,
+    student_id: 1001,
+    sender_id: 219,
+    sender_type: 'TEACHER',
+    message_type: 'SCORE',
     title: '成绩公布',
-    description: '数据结构课堂测验成绩已公布，请查看',
-    status: 'read',
-    statusText: '已读',
+    content: '数据结构课堂测验成绩已公布，请查看',
+    priority: 'NORMAL',
+    is_read: 1,
+    read_time: '2025-01-14 22:00:00',
+    send_time: '2025-01-14 21:00:00',
+    related_type: 'HOMEWORK',
+    related_id: 5004,
   },
 ]);
 // ==================== 🔴 模拟数据 END ====================
@@ -191,7 +222,13 @@ const filteredInboxList = computed(() => {
   if (currentFilter.value === 'all') {
     return inboxList.value;
   }
-  return inboxList.value.filter(item => item.status === currentFilter.value);
+  if (currentFilter.value === 'unread') {
+    return inboxList.value.filter(item => item.is_read === 0);
+  }
+  if (currentFilter.value === 'read') {
+    return inboxList.value.filter(item => item.is_read === 1);
+  }
+  return inboxList.value;
 });
 
 // 切换筛选器
@@ -202,11 +239,16 @@ const setFilter = filter => {
 // 点击消息
 const handleInboxClick = inbox => {
   // 标记为已读
-  if (inbox.status === 'unread') {
-    inbox.status = 'read';
-    inbox.statusText = '已读';
+  if (inbox.is_read === 0) {
+    inbox.is_read = 1;
+    inbox.read_time = new Date().toISOString();
   }
   ElMessage.info(`消息详情功能开发中：${inbox.title}`);
+};
+
+// 获取状态文本（用于前端显示）
+const getStatusText = isRead => {
+  return isRead === 1 ? '已读' : '未读';
 };
 </script>
 
@@ -238,21 +280,21 @@ const handleInboxClick = inbox => {
     <div class="inbox-list">
       <div
         v-for="inbox in filteredInboxList"
-        :key="inbox.id"
-        :class="['inbox-item', inbox.status]"
+        :key="inbox.message_id"
+        :class="['inbox-item', inbox.is_read === 0 ? 'unread' : 'read']"
         @click="handleInboxClick(inbox)"
       >
         <div class="inbox-item-content">
           <div class="inbox-title">{{ inbox.title }}</div>
-          <div class="inbox-description">{{ inbox.description }}</div>
+          <div class="inbox-description">{{ inbox.content }}</div>
         </div>
         <span
           :class="[
             'inbox-status',
-            inbox.status === 'unread' ? 'status-unread' : 'status-read',
+            inbox.is_read === 0 ? 'status-unread' : 'status-read',
           ]"
         >
-          {{ inbox.statusText }}
+          {{ getStatusText(inbox.is_read) }}
         </span>
       </div>
     </div>

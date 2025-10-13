@@ -3,6 +3,7 @@ import HomePage from '../views/HomePage.vue';
 import Login from '../views/Login.vue';
 import StudentLayout from '../views/StudentLayout.vue';
 import StudentDashboard from '../views/StudentDashboard.vue';
+import CourseDetail from '../views/CourseDetail.vue';
 
 const routes = [
   {
@@ -38,6 +39,14 @@ const routes = [
         },
       },
     ],
+  },
+  {
+    path: '/student/course-detail',
+    name: 'CourseDetail',
+    component: CourseDetail,
+    meta: {
+      title: '课程详情 - 北泽智慧教学平台',
+    },
   },
 ];
 
