@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>北泽智慧教学平台</title>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="logo">
+                    <span class="logo-icon">∞</span>
+                    <span class="logo-text">北泽智慧教学平台</span>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="#" class="nav-link active">首页</a></li>
+                    <li class="nav-item"><a href="#" class="nav-link">应用中心</a></li>
+                </ul>
+            </div>
+            <div class="nav-auth">
+                <button class="login-btn">登录</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 轮播图区域 -->
+    <div class="container">
+        <div id="slide">
+            <div class="item" style="background-image: url(image/007.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">随时随地学习，轻松掌握知识</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+            <div class="item" style="background-image: url(image/002.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">互动课堂体验，激发学习兴趣</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+            <div class="item" style="background-image: url(image/003.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">智能教学工具，提升教学质量</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+            <div class="item" style="background-image: url(image/004.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">实时反馈系统，精准掌握学情</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+            <div class="item" style="background-image: url(image/005.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">数据驱动决策，优化教育资源</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+            <div class="item" style="background-image: url(image/006.png)">
+                <div class="content">
+                    <div class="name">智慧教室</div>
+                    <div class="des">高效班级管理，助力学校发展</div>
+                    <button>查看更多</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧垂直指示器 -->
+        <div class="vertical-indicators">
+            <div class="vertical-indicator active" data-slide="0"></div>
+            <div class="vertical-indicator" data-slide="1"></div>
+            <div class="vertical-indicator" data-slide="2"></div>
+            <div class="vertical-indicator" data-slide="3"></div>
+            <div class="vertical-indicator" data-slide="4"></div>
+            <div class="vertical-indicator" data-slide="5"></div>
+        </div>
+    </div>
+
+    <script>
+        // 智学网风格连续轮播图
+class ContinuousCarousel {
+    constructor() {
+        this.currentSlide = 0;
+        this.slides = document.querySelectorAll('.item');
+        this.indicators = document.querySelectorAll('.vertical-indicator');
+        this.slideContainer = document.querySelector('#slide');
+        this.totalSlides = this.slides.length;
+        this.autoSlideTimer = null;
+        this.autoSlideInterval = 6000; // 6秒自动切换
+        this.isAnimating = false;
+        this.slideHeight = this.getNavbarHeight(); // 计算每张图片的高度
+        
+        this.init();
+    }
+    
+    getNavbarHeight() {
+        // 动态获取当前导航栏高度
+        const navbar = document.querySelector('.navbar');
+        const navbarHeight = navbar ? navbar.offsetHeight : 75;
+        return window.innerHeight - navbarHeight;
+    }
+    
+    init() {
+        // 初始化图片位置
+        this.updateSlidePositions();
+        
+        // 初始化显示第一张
+        this.updateSlide();
+        
+        // 绑定垂直指示器事件
+        this.indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => this.goToSlide(index));
+        });
+        
+        // 添加滚轮事件（上下滑动）
+        this.bindWheelEvents();
+        
+        // 添加触摸滑动事件
+        this.bindTouchEvents();
+        
+        // 添加键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                this.prevSlide();
+            }
+            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                e.preventDefault();
+                this.nextSlide();
+            }
+        });
+        
+        // 鼠标悬停时暂停自动播放
+        const container = document.querySelector('.container');
+        container.addEventListener('mouseenter', () => this.stopAutoSlide());
+        container.addEventListener('mouseleave', () => this.startAutoSlide());
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            this.slideHeight = this.getNavbarHeight();
+            this.updateSlidePositions();
+            this.updateSlide();
+        });
+        
+        // 启动自动播放
+        this.startAutoSlide();
+        
+        // 为第一张幻灯片触发文字动画
+        setTimeout(() => {
+            this.triggerTextAnimation();
+        }, 500);
+    }
+    
+
+    
+    updateSlidePositions() {
+        // 动态设置每张图片的位置
+        this.slides.forEach((slide, index) => {
+            slide.style.top = `${index * this.slideHeight}px`;
+        });
+        
+        // 更新slide容器的高度
+        this.slideContainer.style.height = `${this.totalSlides * this.slideHeight}px`;
+    }
+    
+    bindWheelEvents() {
+        const container = document.querySelector('.container');
+        let wheelTimeout;
+        
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            if (this.isAnimating) return;
+            
+            // 防抖处理
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                if (e.deltaY > 0) {
+                    // 向下滚动 - 下一张
+                    this.nextSlide();
+                } else {
+                    // 向上滚动 - 上一张
+                    this.prevSlide();
+                }
+            }, 50);
+        }, { passive: false });
+    }
+    
+    bindTouchEvents() {
+        const container = document.querySelector('.container');
+        let startY = 0;
+        let startTime = 0;
+        
+        container.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            startTime = Date.now();
+        }, { passive: true });
+        
+        container.addEventListener('touchend', (e) => {
+            if (this.isAnimating) return;
+            
+            const endY = e.changedTouches[0].clientY;
+            const endTime = Date.now();
+            const diffY = startY - endY;
+            const timeDiff = endTime - startTime;
+            
+            // 检查是否为有效的滑动手势
+            if (Math.abs(diffY) > 50 && timeDiff < 500) {
+                if (diffY > 0) {
+                    // 向上滑动 - 下一张
+                    this.nextSlide();
+                } else {
+                    // 向下滑动 - 上一张
+                    this.prevSlide();
+                }
+            }
+        }, { passive: true });
+    }
+    
+    nextSlide() {
+        if (this.isAnimating) return;
+        this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+        this.updateSlide();
+        this.resetAutoSlide();
+    }
+    
+    prevSlide() {
+        if (this.isAnimating) return;
+        this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+        this.updateSlide();
+        this.resetAutoSlide();
+    }
+    
+    goToSlide(index) {
+        if (this.isAnimating || index === this.currentSlide) return;
+        this.currentSlide = index;
+        this.updateSlide();
+        this.resetAutoSlide();
+    }
+    
+    updateSlide() {
+        this.isAnimating = true;
+        
+        // 先重置所有文字状态
+        this.resetAllTextAnimations();
+        
+        // 计算移动距离
+        const translateY = -this.currentSlide * this.slideHeight;
+        this.slideContainer.style.transform = `translateY(${translateY}px)`;
+        
+        // 更新指示器状态
+        this.updateIndicators();
+        
+        // 延迟触发当前幻灯片的文字动画
+        setTimeout(() => {
+            this.triggerTextAnimation();
+            this.isAnimating = false;
+        }, 1000); // 等待轮播切换完成后再开始文字动画
+    }
+    
+    updateIndicators() {
+        this.indicators.forEach((indicator, index) => {
+            indicator.classList.remove('active');
+            if (index === this.currentSlide) {
+                indicator.classList.add('active');
+            }
+        });
+    }
+    
+    addContentAnimation() {
+        // 移除重新触发动画的逻辑，保持文字始终可见
+        // 动画只在页面加载时通过CSS自动触发
+        return;
+    }
+    
+    resetAllTextAnimations() {
+        // 重置所有幻灯片的文字动画状态
+        this.slides.forEach(slide => {
+            const content = slide.querySelector('.content');
+            if (content) {
+                const textElements = content.querySelectorAll('.name, .des, button');
+                textElements.forEach(element => {
+                    // 移除所有动画相关的类
+                    element.classList.remove('text-fade-in');
+                    // 设置初始状态为不可见
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(30px)';
+                    element.style.filter = 'blur(8px)';
+                });
+            }
+        });
+    }
+    
+    triggerTextAnimation() {
+        // 为当前活动幻灯片的文字添加浮现动画
+        const currentSlide = this.slides[this.currentSlide];
+        const content = currentSlide.querySelector('.content');
+        
+        if (content) {
+            const nameElement = content.querySelector('.name');
+            const desElement = content.querySelector('.des');
+            const buttonElement = content.querySelector('button');
+            
+            // 依次添加动画，创建层次效果，每个元素间隔100ms
+            setTimeout(() => {
+                if (nameElement) {
+                    nameElement.classList.add('text-fade-in');
+                }
+            }, 100);
+            
+            setTimeout(() => {
+                if (desElement) {
+                    desElement.classList.add('text-fade-in');
+                }
+            }, 200);
+            
+            setTimeout(() => {
+                if (buttonElement) {
+                    buttonElement.classList.add('text-fade-in');
+                }
+            }, 300);
+        }
+    }
+    
+    startAutoSlide() {
+        this.stopAutoSlide();
+        this.autoSlideTimer = setInterval(() => {
+            this.nextSlide();
+        }, this.autoSlideInterval);
+    }
+    
+    stopAutoSlide() {
+        if (this.autoSlideTimer) {
+            clearInterval(this.autoSlideTimer);
+            this.autoSlideTimer = null;
+        }
+    }
+    
+    resetAutoSlide() {
+        this.stopAutoSlide();
+        this.startAutoSlide();
+    }
+}
+
+// 页面滚动控制
+class ScrollController {
+    constructor() {
+        this.init();
+    }
+    
+    init() {
+        // 禁用页面默认滚动
+        document.body.style.overflow = 'hidden';
+        
+        // 防止默认的滚动行为
+        document.addEventListener('wheel', (e) => {
+            if (e.target.closest('.container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // 防止触摸滑动导致页面滚动
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+}
+
+// 导航栏功能
+function initNavigation() {
+    // 登录按钮点击事件
+    const loginBtn = document.querySelector('.login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            alert('登录功能开发中...');
+        });
+    }
+    
+    // 导航链接激活状态
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // 移除所有激活状态
+            navLinks.forEach(l => l.classList.remove('active'));
+            // 添加当前激活状态
+            this.classList.add('active');
+        });
+    });
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化轮播图
+    const carousel = new ContinuousCarousel();
+    window.fullscreenCarousel = carousel;
+    
+    // 初始化滚动控制
+    const scrollController = new ScrollController();
+    
+    // 初始化导航栏
+    initNavigation();
+    
+    // 页面可见性API支持
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            carousel.stopAutoSlide();
+        } else {
+            carousel.startAutoSlide();
+        }
+    });
+});
+
+// 显示提示消息函数
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(76,175,80,0.3);
+        animation: slideDown 3s ease-in-out forwards;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// 添加CSS动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideDown {
+        0% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        10%, 80% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-10px);
+        }
+    }
+    
+    @keyframes swipeFeedbackLeft {
+        0% {
+            opacity: 0;
+            transform: translateY(-50%) scale(0.5);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-50%) scale(1) translateX(20px);
+        }
+    }
+    
+    @keyframes swipeFeedbackRight {
+        0% {
+            opacity: 0;
+            transform: translateY(-50%) scale(0.5);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-50%) scale(1) translateX(-20px);
+        }
+    }
+    
+    /* 指示器进度条效果 */
+    .indicator.active::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.6);
+        animation: indicatorProgress 5s linear infinite;
+    }
+    
+    @keyframes indicatorProgress {
+        0% {
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: rotate(0deg);
+        }
+        100% {
+            border-color: rgba(255, 255, 255, 0.9);
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* 指示器悬停时的波纹效果 */
+    .indicator:active::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        animation: rippleEffect 0.6s ease-out;
+    }
+    
+    @keyframes rippleEffect {
+        to {
+            width: 40px;
+            height: 40px;
+            opacity: 0;
+        }
+    }
+    
+    /* 点击反馈动画 */
+    @keyframes rippleClickEffect {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(0);
+        }
+        50% {
+            opacity: 0.6;
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(6);
+        }
+    }
+    
+    /* 内部波纹动画 */
+    @keyframes innerRippleEffect {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        70% {
+            opacity: 0.8;
+            transform: translate(-50%, -50%) scale(2);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(3);
+        }
+    }
+`;
+document.head.appendChild(style);
+    </script>
+    <style>
+        .navbar {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(30,60,114,0.2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    height: 75px;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.nav-container {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    height: 100%;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.logo:hover {
+    transform: scale(1.02);
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #00d4ff, #0099cc);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 20px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,212,255,0.3);
+    transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon {
+    box-shadow: 0 6px 20px rgba(0,212,255,0.5);
+    transform: translateY(-1px);
+}
+
+.logo-text {
+    color: white;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 5px;
+    position: relative;
+}
+
+.nav-item {
+    margin: 0;
+    position: relative;
+}
+
+.nav-link {
+    color: rgba(255,255,255,0.95);
+    text-decoration: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 16px;
+    font-weight: 500;
+    position: relative;
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(255,255,255,0.15);
+    color: #00d4ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,212,255,0.2);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0,212,255,0.4);
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,153,204,0.05));
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.nav-link:hover::before {
+    opacity: 1;
+}
+
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    margin-right: 10px;
+}
+
+.login-btn {
+    background: linear-gradient(45deg, #00d4ff, #0099cc);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0,212,255,0.4);
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+    white-space: nowrap;
+    min-width: 70px;
+    text-align: center;
+}
+
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s;
+}
+
+.login-btn:hover::before {
+    left: 100%;
+}
+
+.login-btn:hover {
+    background: linear-gradient(45deg, #0099cc, #007aa3);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(0,212,255,0.6);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.login-btn:active {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,212,255,0.5);
+}
+
+/* 主体样式 - 现代教育风格 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 0;
+    padding: 0;
+    padding-top: 75px; /* 为导航栏留出空间 */
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+    /* 移除 overflow: hidden，允许滚动到页脚 */
+}
+
+/* 添加背景装饰元素 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(30,60,114,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(42,82,152,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(0,212,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: backgroundFloat 20s ease-in-out infinite;
+}
+
+@keyframes backgroundFloat {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-20px) rotate(1deg);
+        opacity: 0.8;
+    }
+}
+
+.container {
+    position: fixed;
+    top: 75px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 75px);
+    margin: 0;
+    border-radius: 0;
+    overflow: hidden;
+    background: transparent;
+    z-index: 1;
+}
+
+#slide {
+    position: relative;
+    width: 100%;
+    height: auto; /* 由JavaScript动态设置 */
+    transform: translateY(0);
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 75px); /* 每张图片占一个屏幕高度 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(30,60,114,0.7) 0%,
+        rgba(42,82,152,0.5) 50%,
+        rgba(0,212,255,0.3) 100%
+    );
+    z-index: 1;
+}
+
+.content {
+    position: absolute;
+    left: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    z-index: 2;
+    max-width: 600px;
+    opacity: 1;
+    transition: none; /* 移除过渡效果，保持稳定 */
+}
+
+.name {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 30px;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    letter-spacing: -2px;
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+}
+
+.des {
+    font-size: 24px;
+    margin-bottom: 40px;
+    opacity: 0;
+    line-height: 1.4;
+    font-weight: 300;
+    transform: translateY(30px);
+    filter: blur(8px);
+}
+
+.item button {
+    background: linear-gradient(45deg, #00d4ff, #0099cc);
+    color: white;
+    border: none;
+    padding: 18px 40px;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0,212,255,0.4);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+}
+
+.item button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s;
+}
+
+.item button:hover::before {
+    left: 100%;
+}
+
+.item button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(0,212,255,0.6);
+    background: linear-gradient(45deg, #0099cc, #007aa3);
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-60px);
+        filter: blur(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+        filter: blur(0px);
+    }
+}
+
+/* 3D旋转动画 - 增强版 */
+@keyframes rotate3D {
+    0% {
+        transform: translateX(-50%) rotateY(-15deg) scale(0.8);
+        opacity: 0;
+        filter: blur(5px);
+    }
+    100% {
+        transform: translateX(-50%) rotateY(0deg) scale(1);
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/* 移除原有的导航按钮和指示器 */
+.button,
+.indicators {
+    display: none;
+}
+
+/* 右侧垂直指示器 - 智学网风格 */
+.vertical-indicators {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.vertical-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.vertical-indicator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    background: #00d4ff;
+    border-radius: 50%;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vertical-indicator:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(1.2);
+}
+
+.vertical-indicator.active {
+    background: #00d4ff;
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0,212,255,0.5);
+    transform: scale(1.3);
+}
+
+.vertical-indicator.active::before {
+    width: 6px;
+    height: 6px;
+    background: white;
+}
+
+/* 响应式设计 - 现代化 */
+@media (max-width: 768px) {
+    .navbar {
+        height: 65px;
+        box-shadow: 0 3px 15px rgba(30,60,114,0.25);
+    }
+    
+    .nav-container {
+        padding: 0 20px;
+    }
+    
+    .nav-auth {
+        margin-right: 5px;
+    }
+    
+    .nav-left {
+        gap: 15px;
+    }
+    
+    .logo {
+        font-size: 17px;
+    }
+    
+    .logo-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+        margin-right: 12px;
+        border-radius: 8px;
+    }
+    
+    .logo-text {
+        font-size: 17px;
+    }
+    
+    .nav-menu {
+        gap: 15px;
+    }
+    
+    .nav-link {
+        font-size: 15px;
+        padding: 12px 18px;
+        border-radius: 10px;
+    }
+    
+    .login-btn {
+        padding: 10px 22px;
+        font-size: 14px;
+        border-radius: 25px;
+    }
+    
+    body {
+        padding-top: 65px;
+    }
+    
+    .container {
+        top: 65px;
+        height: calc(100vh - 65px);
+    }
+    
+    .item {
+        height: calc(100vh - 65px);
+    }
+    
+    .content {
+        left: 40px;
+        max-width: 400px;
+    }
+    
+    .name {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+    
+    .des {
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+    
+    .item button {
+        padding: 14px 32px;
+        font-size: 16px;
+    }
+    
+    .vertical-indicators {
+        right: 20px;
+        gap: 12px;
+    }
+    
+    .vertical-indicator {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        height: 60px;
+        box-shadow: 0 2px 12px rgba(30,60,114,0.3);
+    }
+    
+    .nav-container {
+        padding: 0 15px;
+    }
+    
+    .nav-auth {
+        margin-right: 0;
+    }
+    
+    .nav-left {
+        gap: 10px;
+    }
+    
+    .logo {
+        font-size: 15px;
+    }
+    
+    .logo-text {
+        font-size: 14px;
+        letter-spacing: 0.2px;
+    }
+    
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        margin-right: 10px;
+        border-radius: 6px;
+    }
+    
+    .nav-menu {
+        gap: 10px;
+    }
+    
+    .nav-link {
+        font-size: 14px;
+        padding: 10px 16px;
+        border-radius: 8px;
+    }
+    
+    .login-btn {
+        padding: 8px 18px;
+        font-size: 13px;
+        border-radius: 20px;
+        min-width: 60px;
+    }
+    
+    body {
+        padding-top: 60px;
+    }
+    
+    .container {
+        top: 60px;
+        height: calc(100vh - 60px);
+    }
+    
+    .item {
+        height: calc(100vh - 60px);
+    }
+    
+    .content {
+        left: 20px;
+        max-width: 280px;
+    }
+    
+    .name {
+        font-size: 32px;
+        line-height: 1.2;
+        margin-bottom: 15px;
+    }
+    
+    .des {
+        font-size: 16px;
+        margin-bottom: 25px;
+    }
+    
+    .item button {
+        padding: 12px 25px;
+        font-size: 14px;
+    }
+    
+    .vertical-indicators {
+        right: 15px;
+        gap: 10px;
+    }
+    
+    .vertical-indicator {
+        width: 8px;
+        height: 8px;
+        border-width: 1px;
+    }
+    
+    .vertical-indicator.active::before {
+        width: 4px;
+        height: 4px;
+    }
+}
+
+/* 文字浮现动画效果 */
+.text-fade-in {
+    animation: textFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes textFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+        filter: blur(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+
+
+/* 导航栏额外动画效果 */
+.navbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.05) 0%,
+        transparent 50%,
+        rgba(0,212,255,0.03) 100%
+    );
+    pointer-events: none;
+    animation: navbarShimmer 8s ease-in-out infinite;
+}
+
+@keyframes navbarShimmer {
+    0%, 100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translateX(2px);
+    }
+}
+
+/* 导航栏滚动时的动态效果 */
+.navbar.scrolled {
+    background: linear-gradient(135deg, rgba(30,60,114,0.95), rgba(42,82,152,0.95));
+    backdrop-filter: blur(15px);
+    box-shadow: 0 6px 30px rgba(30,60,114,0.3);
+}
+
+/* 导航链接点击反馈 */
+.nav-link:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* 确保所有内容元素在动画后保持稳定状态 */
+.content * {
+    animation-fill-mode: both;
+    will-change: auto; /* 动画完成后移除硬件加速 */
+}
+
+/* 在轮播切换完成后确保内容稳定 */
+.item .content {
+    will-change: auto;
+}
+    </style>
+</body>
+</html>

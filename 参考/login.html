@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 智慧教学管理系统</title>
+    <style>
+        /* 基础样式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 登录框样式 */
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+
+        .remember-me input {
+            margin-right: 5px;
+        }
+
+        .forgot-password {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        /* 按钮样式 */
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #0056b3;
+        }
+
+        .btn-login:active {
+            transform: translateY(1px);
+        }
+
+        /* 提示信息 */
+        .login-tips {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f8ff;
+            border-left: 3px solid #007bff;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- 登录容器 -->
+<div class="login-container">
+    <!-- 登录头部 -->
+    <div class="login-header">
+        <h1>🎓 智慧教学管理系统</h1>
+        <p>基于AIGC的融合高校智慧教学平台 - 教师端</p>
+    </div>
+
+    <!-- 登录表单 -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <!-- 用户名输入 -->
+        <div class="form-group">
+            <label for="username">用户名/工号</label>
+            <input type="text" id="username" name="username" placeholder="请输入用户名或工号" required>
+        </div>
+
+        <!-- 密码输入 -->
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" placeholder="请输入密码" required>
+        </div>
+
+        <!-- 选项区域 -->
+        <div class="form-options">
+            <div class="remember-me">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">记住密码</label>
+            </div>
+            <a href="#" class="forgot-password" onclick="handleForgotPassword()">忘记密码？</a>
+        </div>
+
+        <!-- 登录按钮 -->
+        <button type="submit" class="btn-login">登 录</button>
+
+        <!-- 错误提示 -->
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+
+    <!-- 提示信息 -->
+    <div class="login-tips">
+        <strong>测试账号：</strong><br>
+        用户名：teacher001 | 密码：123456<br>
+        点击登录后将跳转到教师工作台
+    </div>
+</div>
+
+<script>
+    /**
+     * 处理登录表单提交
+     * @param {Event} event - 表单提交事件
+     */
+    function handleLogin(event) {
+        event.preventDefault(); // 阻止表单默认提交
+
+        // 获取表单数据
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const remember = document.getElementById('remember').checked;
+
+        // 清除之前的错误信息
+        const errorMsg = document.getElementById('errorMessage');
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+
+        // 模拟登录验证（实际应用中需要发送到后端验证）
+        if (username === 'teacher001' && password === '123456') {
+            // 保存登录状态（模拟）
+            if (remember) {
+                localStorage.setItem('rememberedUser', username);
+                console.log('已记住用户名：' + username);
+            }
+
+            // 保存当前用户信息到sessionStorage（供其他页面使用）
+            sessionStorage.setItem('currentUser', JSON.stringify({
+                username: username,
+                name: '张老师',
+                role: '教师',
+                loginTime: new Date().toLocaleString()
+            }));
+
+            // 显示登录成功提示
+            alert('登录成功！即将跳转到教师工作台...');
+
+            // 跳转到教师工作台
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 500);
+
+        } else {
+            // 显示错误信息
+            errorMsg.textContent = '用户名或密码错误，请重试！';
+            errorMsg.style.display = 'block';
+
+            // 清空密码框
+            document.getElementById('password').value = '';
+        }
+    }
+
+    /**
+     * 处理忘记密码
+     */
+    function handleForgotPassword() {
+        alert('请联系系统管理员重置密码\n管理员电话：010-12345678');
+    }
+
+    /**
+     * 页面加载时检查是否记住了用户名
+     */
+    window.onload = function() {
+        const rememberedUser = localStorage.getItem('rememberedUser');
+        if (rememberedUser) {
+            document.getElementById('username').value = rememberedUser;
+            document.getElementById('remember').checked = true;
+            document.getElementById('password').focus(); // 焦点定位到密码框
+        } else {
+            document.getElementById('username').focus(); // 焦点定位到用户名框
+        }
+
+        // 开发模式：按Enter键快速登录（仅用于测试）
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('username').value = 'teacher001';
+                document.getElementById('password').value = '123456';
+                handleLogin(e);
+            }
+        });
+
+        console.log('提示：按 Ctrl+Enter 可快速填充测试账号并登录');
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课程/课表</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --sidebar: #2f3a56;
+      --sidebar-active: #3f4b6e;
+      --text: #1f2544;
+      --muted: #6b7280;
+      --primary: #5b7cff;
+      --primary-600: #4a67d6;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --notice-bg: #fff7e6;
+      --notice-text: #8a5700;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    }
+
+    /* 顶部通知栏 */
+    .notice-bar {
+      width: 100%;
+      background: var(--notice-bg);
+      color: var(--notice-text);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border-bottom: 1px solid #fde8c3;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .notice-bar button {
+      background: transparent;
+      border: none;
+      color: var(--notice-text);
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .notice-bar button:hover { background: rgba(0,0,0,0.05); }
+
+    .app {
+      display: grid;
+      grid-template-columns: 257px 1fr;
+      height: calc(100% - 0px);
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      background: #ffffff;
+      color: var(--text);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: calc(100vh - 0px);
+      border-right: 1px solid var(--border);
+    }
+    .brand { font-weight: 700; letter-spacing: 0.5px; color: #64748b; }
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 8px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .profile img {
+      width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.25);
+    }
+    .menu { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .menu a {
+      color: #334155;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: block;
+    }
+    .menu a.active, .menu a:hover { background: #f1f5f9; }
+
+    /* 顶部栏 */
+    .topbar {
+      background: #ffffff;
+      padding: 14px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 40px;
+      z-index: 999;
+    }
+    .search { display: flex; gap: 12px; align-items: center; justify-content: center; }
+    .search input {
+      width: 560px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+    }
+    .announce-inline { color: #a16207; font-size: 12px; background:#fffbeb; border:1px solid #fde68a; padding:6px 10px; border-radius: 999px; }
+
+    /* 内容区域 */
+    .content { padding: 20px 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(34, 41, 69, 0.04);
+    }
+
+    /* 合并：课程/课表 */
+    .schedule-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .controls { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+    .controls select, .controls button {
+      padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer;
+    }
+    .controls select:not(:last-child) {
+      margin-right: 8px;
+    }
+    .controls .primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .controls .primary:hover { background: var(--primary-600); }
+    .segmented { display: inline-flex; border:1px solid var(--border); border-radius: 10px; overflow:hidden; }
+    .segmented button { border:0; background:#fff; padding:8px 14px; cursor:pointer; }
+    .segmented button.active { background: var(--primary); color:#fff; }
+
+    /* 周数选择器 */
+    .week-picker { display:flex; flex-direction:column; align-items:center; gap:12px; padding:8px 0; }
+    .week-row { display:flex; align-items:center; gap:18px; }
+    .wp-arrow { width:36px; height:36px; border-radius:10px; border:1px solid var(--border); background:#fff; cursor:pointer; display:grid; place-items:center; color:#334155; }
+    .wp-list { display:flex; align-items:center; gap:24px; }
+    .wp-num { width:36px; height:36px; border-radius:999px; display:grid; place-items:center; color:#334155; cursor:pointer; }
+    .wp-num.active { background: var(--primary); color:#fff; box-shadow:0 6px 16px rgba(91,124,255,.35); }
+    .wp-btn { background: var(--primary); color:#fff; border:0; border-radius:10px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; }
+    .wp-btn-sm { padding:6px 10px; font-size:12px; border-radius:8px; }
+    /* 提升选择器优先级，覆盖 .controls button 的通用样式 */
+    .week-picker .wp-btn, .week-picker .wp-btn-sm { background: var(--primary); color:#fff; border:0; }
+    .wp-chip { border:1px solid var(--border); background:#fff; color:#334155; border-radius:999px; padding:6px 10px; cursor:pointer; }
+    /* 小弹窗（显示全部周数） */
+    .wp-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:1000 }
+    .wp-modal{ background:#fff; border:1px solid var(--border); border-radius:12px; width:520px; max-width:92vw; padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.2) }
+    .wp-modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+    .wp-modal-grid{ display:flex; gap:8px; flex-wrap:wrap; }
+    .wp-foot { color:#334155; }
+
+    .schedule-wrap { padding: 12px; }
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      grid-template-rows: auto repeat(5, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .grid-header { background: #f3f4f6; border-bottom: 1px solid var(--border); display: contents; }
+    .grid-header div { padding: 18px; font-weight: 600; text-align: center; color:#475569; font-size: 13px; }
+
+    .time-slot { 
+      padding: 16px 10px; 
+      border-bottom: 1px solid var(--border); 
+      font-size: 12px; 
+      color: var(--muted); 
+      text-align: right; 
+      min-height: 100px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-end; 
+      justify-content: center;
+      line-height: 1.2;
+      flex: 1;
+    }
+    .cell { 
+      border-right: 1px solid var(--border); 
+      border-bottom: 1px solid var(--border); 
+      min-height: 100px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      padding: 16px 10px;
+    }
+    
+    /* 跨行课程样式 */
+    .course-span-3 { grid-row: span 3; }
+    .course-span-2 { grid-row: span 2; }
+    
+    /* 调整时间列的网格位置 */
+    .time-col { 
+      grid-column: 1; 
+      grid-row: 2 / -1; 
+      display: flex; 
+      flex-direction: column; 
+      background: #fafafa; 
+      border-right: 1px solid var(--border); 
+    }
+    
+    /* 移除原来的时间列样式冲突 */
+    .schedule-grid .time-col { background: #fafafa; border-right: 1px solid var(--border); }
+    .cell:last-child { border-right: none; }
+    /* 课程状态色 */
+    .course-upcoming{ 
+      background: linear-gradient(135deg, #fef7f7, #fee2e2); 
+      border: 1px solid #fca5a5;
+      transition: all 0.2s ease;
+    }
+    .course-done{ 
+      background: linear-gradient(135deg, #ecfdf5, #dcfce7); 
+      border: 1px solid #a7f3d0;
+      transition: all 0.2s ease;
+    }
+    .course-not-started{ 
+      background: linear-gradient(135deg, #f9fafb, #f3f4f6); 
+      border: 1px solid #d1d5db;
+      transition: all 0.2s ease;
+    }
+    
+    /* 课程内容样式 */
+    .course-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .course-name {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+    
+    .teacher-name {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.2;
+    }
+    
+    .status-icon {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    
+    /* 悬停效果 */
+    .cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .course-not-started:hover {
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    }
+    
+    .course-done:hover {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    }
+    
+    .course-upcoming:hover {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 768px) {
+      .course-name {
+        font-size: 10px;
+      }
+      
+      .teacher-name {
+        font-size: 8px;
+      }
+      
+      .status-icon {
+        font-size: 7px;
+      }
+      
+      .course-content {
+        padding: 4px;
+      }
+      
+      .grid-header {
+        font-size: 11px;
+      }
+      
+      .time-slot {
+        font-size: 11px;
+        padding: 8px 4px;
+      }
+    }
+    
+    /* 课表网格增强 */
+    .schedule-grid {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+    
+    .grid-header div {
+      font-weight: 600;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .time-col .time-slot {
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* 课程列表（矩形占位布局） */
+    .course-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding: 16px; }
+    .course-item { border: 1px solid var(--border); border-radius: 12px; padding: 18px; background: #fff; display: flex; flex-direction: column; gap: 12px; }
+    .course-item h4 { margin: 0; font-size: 16px; }
+    .course-item .meta { color: var(--muted); font-size: 13px; }
+    .course-rect { height: 120px; border: 1px dashed var(--border); border-radius: 10px; background: #fafafa; }
+
+    /* 任务与收件箱列表样式 */
+    .list { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+    .item { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .status { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .status-blue { background: #e0e7ff; color: #3730a3; }
+    .status-gray { background: #e5e7eb; color: #374151; }
+
+    /* 用户下拉菜单样式 */
+    .user-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .user-profile-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .user-profile-trigger:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: -5px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      width: 110px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      margin-top: 5px;
+    }
+    
+    .user-dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .dropdown-menu a {
+      display: block;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .dropdown-menu a:last-child {
+      border-bottom: none;
+    }
+    
+    .dropdown-menu a:hover {
+      background: #f8fafc;
+    }
+
+    /* 推荐动画效果 */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* 今日事项样式 */
+    .today-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .today-content {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 24px;
+      padding: 20px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      justify-content: space-between;
+    }
+    
+    .section-header span:first-child {
+      font-size: 16px;
+    }
+    
+    .course-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .course-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--border);
+      background: #fafafa;
+      transition: all 0.2s ease;
+    }
+    
+    .course-item.completed {
+      border-left-color: #22c55e;
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    }
+    
+    .course-item.current {
+      border-left-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+    }
+    
+    .course-item.upcoming {
+      border-left-color: #3b82f6;
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    }
+    
+    .course-time {
+      min-width: 100px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 14px;
+    }
+    
+    .course-info {
+      flex: 1;
+    }
+    
+    .course-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .course-name {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 15px;
+    }
+    
+    .course-status {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    .course-status.done {
+      background: #22c55e;
+      color: white;
+    }
+    
+    .course-status.ongoing {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .course-status.coming {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .course-details {
+      display: flex;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    
+    .todo-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .todo-item.urgent {
+      border-left: 4px solid #ef4444;
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    }
+    
+    .todo-item.normal {
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .todo-item.completed {
+      background: #f9fafb;
+      opacity: 0.7;
+    }
+    
+    .todo-item.completed label {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    
+    .todo-item input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+    
+    .todo-item label {
+      flex: 1;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+    }
+    
+    .todo-deadline {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    
+    .todo-item.urgent .todo-deadline {
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    /* 响应式 */
+    @media (max-width: 1200px) {
+      .today-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+    
+    @media (max-width: 1100px) {
+      .course-list { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: sticky; top: 0; z-index: 998; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .course-list { grid-template-columns: 1fr; }
+      .search input { width: 180px; }
+      .today-content { padding: 16px; gap: 16px; }
+      .course-item { padding: 12px; }
+      .todo-item { padding: 10px; }
+      /* 快速学习移动端适配 */
+      .quick-learning-buttons { 
+        flex-direction: column; 
+        gap: 12px !important; 
+      }
+      .quick-learning-button {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部通知栏 -->
+  <div class="notice-bar" id="noticeBar">
+    <span>通知：本周起上课时间调整为 8:30 开始，请提前到教室。</span>
+    <button aria-label="关闭通知" onclick="document.getElementById('noticeBar').style.display='none'">关闭</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">贵州大学（学生）</div>
+      <div class="profile" onclick="goToProfile()" style="cursor: pointer;">
+        <img src="https://picsum.photos/seed/user123/80" alt="avatar" />
+        <div>
+          <div>123</div>
+          <div style="opacity:.7;font-size:12px">pingu</div>
+        </div>
+      </div>
+      <nav class="menu">
+        <a class="active" href="#" id="linkSchedule">课程/课表</a>
+        <a href="#" id="linkToday">今日事项</a>
+        <a href="#" id="linkTasks">我的任务</a>
+        <a href="#" id="linkInbox">收件箱</a>
+        <a href="#" id="linkPath">学习路径规划</a>
+      </nav>
+    </aside>
+
+    <main>
+      <!-- 顶栏（搜索、用户） -->
+      <div class="topbar">
+        <div class="search">
+          <input placeholder="输入关键词" />
+          <span class="announce-inline">公告栏：延后返校第2周</span>
+        </div>
+        <div class="user-dropdown">
+          <div class="user-profile-trigger">
+            <span style="color:var(--muted);">123</span>
+            <img src="https://picsum.photos/seed/user123/32" style="width:32px;height:32px;border-radius:50%" alt="avatar" />
+          </div>
+          <div class="dropdown-menu">
+            <a href="#" onclick="goToProfile()">
+              <span>个人中心</span>
+            </a>
+            <a href="#" onclick="logout()">
+              <span>退出登录</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <section class="card" id="scheduleCard">
+          <div class="schedule-header">
+            <div class="controls">
+              <select id="semesterFilter">
+                <option>2025-2026 上学期</option>
+                <option>2025-2026 下学期</option>
+                <option>2024-2025 上学期</option>
+              </select>
+              <select id="statusFilter" onchange="filterByStatus()">
+                <option value="all">所有状态</option>
+                <option value="course-done">已完成</option>
+                <option value="course-upcoming">即将开始</option>
+                <option value="course-not-started">未开播</option>
+              </select>
+            </div>
+            <div class="controls" style="justify-content:center;">
+              <div class="week-picker" id="weekPicker">
+               
+                <div class="week-row">
+                  <button class="wp-arrow" id="wpPrev" aria-label="上一周">◀</button>
+                  <div class="wp-list" id="wpList"></div>
+                  <button class="wp-arrow" id="wpNext" aria-label="下一周">▶</button>
+                  <button class="wp-btn wp-btn-sm" id="wpToggle" title="显示全部周数"><span>▤</span><span>全部周数</span></button>
+                </div>
+                <!-- 小弹窗：全部周数 -->
+                <div class="wp-overlay" id="wpOverlay" role="dialog" aria-modal="true">
+                  <div class="wp-modal">
+                    <div class="wp-modal-head"><strong>选择周数</strong><button class="btn" id="wpClose" style="border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer">关闭</button></div>
+                    <div class="wp-modal-grid" id="wpAll"></div>
+                  </div>
+                </div>
+                <div class="wp-foot">当前选择：<span id="wpCurrent" style="color:var(--primary);font-weight:600">第2周</span></div>
+              </div>
+            </div>
+            <div class="controls" style="justify-content:flex-end;display:flex;gap:12px;align-items:center;">
+              <button onclick="location.href='course_selection.html'" style="background:var(--primary);color:#fff;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:14px;transition:all 0.2s ease;">
+                <span>网上选课</span>
+              </button>
+              <div class="segmented">
+                <button id="tabSchedule" class="active">课表</button>
+                <button id="tabCourses">课程</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 课表视图 -->
+          <div class="schedule-wrap" id="scheduleView">
+            <div style="display:flex;justify-content:flex-end;gap:16px;margin-bottom:8px;font-size:12px;color:var(--muted)">
+              <span><span style="color:#6b7280">⏸</span> 未开播</span>
+              <span><span style="color:#16a34a">✓</span> 已完成</span>
+              <span><span style="color:#dc2626">🔴</span> 即将开始</span>
+            </div>
+            <div class="schedule-grid">
+              <div class="grid-header">
+                <div style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #64748b;">时间</div>
+                <div>周一<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-02</span></div>
+                <div>周二<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-03</span></div>
+                <div>周三<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-04</span></div>
+                <div>周四<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-05</span></div>
+                <div>周五<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-06</span></div>
+                <div>周六<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-07</span></div>
+                <div>周日<br/><span style="color:var(--muted);font-weight:400;font-size:11px">02-08</span></div>
+              </div>
+              
+              <!-- 时间列 -->
+              <div class="time-col">
+                <div class="time-slot">1<br/>08:00-10:00</div>
+                <div class="time-slot">2<br/>10:00-12:00</div>
+                <div class="time-slot">3<br/>14:30-16:30</div>
+                <div class="time-slot">4<br/>16:30-18:30</div>
+                <div class="time-slot">5<br/>19:30-21:30</div>
+              </div>
+              
+              <!-- 周一 -->
+              <a class="cell course-not-started" style="grid-column: 2; grid-row: 2;" href="liveroom_off.html?course=计算机网络&mode=live&from=schedule&status=not-started" title="计算机网络 - 孔老师 (未上课)"><div class="course-content"><span class="course-name">计算机网络</span><br/><span class="teacher-name">孔老师</span><span class="status-icon">⏸</span></div></a>
+              <a class="cell course-not-started" style="grid-column: 2; grid-row: 4;" href="liveroom_off.html?course=软件工程&mode=live&from=schedule&status=not-started" title="软件工程 - 刘老师 (未上课)"><div class="course-content"><span class="course-name">软件工程</span><br/><span class="teacher-name">刘老师</span><span class="status-icon">⏸</span></div></a>
+              
+              <!-- 周二 -->  
+              <a class="cell course-upcoming" style="grid-column: 3; grid-row: 2;" href="liveroom.html?course=软件工程&mode=live&from=schedule" title="软件工程 - 刘老师 (即将开始)"><div class="course-content"><span class="course-name">软件工程</span><br/><span class="teacher-name">刘老师</span><span class="status-icon">🔴</span></div></a>
+              <a class="cell course-upcoming" style="grid-column: 3; grid-row: 5;" href="liveroom.html?course=MVVM前端框架开发技术&mode=live&from=schedule" title="MVVM前端框架开发技术 - 熊老师 (即将开始)"><div class="course-content"><span class="course-name">MVVM框架</span><br/><span class="teacher-name">熊老师</span><span class="status-icon">🔴</span></div></a>
+              
+              <!-- 周三 -->
+              <a class="cell course-done" style="grid-column: 4; grid-row: 2;" href="liveroom_off.html?course=Java Web高级技术&mode=replay&from=schedule" title="Java Web高级技术 - 各老师 (已完成)"><div class="course-content"><span class="course-name">Java Web高级</span><br/><span class="teacher-name">各老师</span><span class="status-icon">✓</span></div></a>
+              <a class="cell course-not-started" style="grid-column: 4; grid-row: 3;" href="liveroom_off.html?course=数学建模&mode=live&from=schedule&status=not-started" title="数学建模 - 丁老师 (未上课)"><div class="course-content"><span class="course-name">数学建模</span><br/><span class="teacher-name">丁老师</span><span class="status-icon">⏸</span></div></a>
+              <a class="cell course-not-started" style="grid-column: 4; grid-row: 5;" href="liveroom_off.html?course=软件设计与系统构型&mode=live&from=schedule&status=not-started" title="软件设计与系统构型 - 刘老师 (未上课)"><div class="course-content"><span class="course-name">软件设计</span><br/><span class="teacher-name">刘老师</span><span class="status-icon">⏸</span></div></a>
+              
+              <!-- 周四 -->
+              <a class="cell course-done" style="grid-column: 5; grid-row: 2;" href="liveroom_off.html?course=Java Web反射技术&mode=replay&from=schedule" title="Java Web反射技术 - 罗老师 (已完成)"><div class="course-content"><span class="course-name">Java反射</span><br/><span class="teacher-name">罗老师</span><span class="status-icon">✓</span></div></a>
+              <a class="cell course-upcoming" style="grid-column: 5; grid-row: 5;" href="liveroom.html?course=Docker云容器与管理技术&mode=live&from=schedule" title="Docker云容器与管理技术 - 罗老师 (即将开始)"><div class="course-content"><span class="course-name">Docker容器</span><br/><span class="teacher-name">罗老师</span><span class="status-icon">🔴</span></div></a>
+              
+              <!-- 周五 -->
+              <a class="cell course-not-started" style="grid-column: 6; grid-row: 2;" href="liveroom_off.html?course=计算机网络&mode=live&from=schedule&status=not-started" title="计算机网络 - 孔老师 (未上课)"><div class="course-content"><span class="course-name">计算机网络</span><br/><span class="teacher-name">孔老师</span><span class="status-icon">⏸</span></div></a>
+              
+              <!-- 周六 -->
+              <a class="cell course-not-started" style="grid-column: 7; grid-row: 3;" href="liveroom_off.html?course=软件设计与系统构型&mode=live&from=schedule&status=not-started" title="软件设计与系统构型 - 刘老师 (未上课)"><div class="course-content"><span class="course-name">软件设计</span><br/><span class="teacher-name">刘老师</span><span class="status-icon">⏸</span></div></a>
+              <a class="cell course-upcoming" style="grid-column: 7; grid-row: 6;" href="liveroom.html?course=高级数据库技术与应用&mode=live&from=schedule" title="高级数据库技术与应用 - 黄老师 (即将开始)"><div class="course-content"><span class="course-name">数据库应用</span><br/><span class="teacher-name">黄老师</span><span class="status-icon">🔴</span></div></a>
+              
+              <!-- 周日 -->
+              <a class="cell course-not-started" style="grid-column: 8; grid-row: 3;" href="liveroom_off.html?course=MVVM前端框架开发技术&mode=live&from=schedule&status=not-started" title="MVVM前端框架开发技术 - 熊老师 (未上课)"><div class="course-content"><span class="course-name">MVVM框架</span><br/><span class="teacher-name">熊老师</span><span class="status-icon">⏸</span></div></a>
+              <a class="cell course-upcoming" style="grid-column: 8; grid-row: 5;" href="liveroom.html?course=Docker云容器技术&mode=live&from=schedule" title="Docker云容器技术 - 罗老师 (即将开始)"><div class="course-content"><span class="course-name">Docker容器</span><br/><span class="teacher-name">罗老师</span><span class="status-icon">🔴</span></div></a>
+            </div>
+          </div>
+
+          <!-- 课程列表视图（矩形占位，显示课程信息） -->
+          <div class="course-list" id="courseListView" style="display:none">
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=高等数学（上）" style="text-decoration:none;color:inherit">高等数学（上）</a></h4>
+              <div class="meta">年级/班级：2025级 数学一班</div>
+              <div class="meta">任课老师：王老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=大学物理" style="text-decoration:none;color:inherit">大学物理</a></h4>
+              <div class="meta">年级/班级：2025级 物理二班</div>
+              <div class="meta">任课老师：李老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=计算机导论" style="text-decoration:none;color:inherit">计算机导论</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：赵老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4>线性代数</h4>
+              <div class="meta">年级/班级：2025级 数学一班</div>
+              <div class="meta">任课老师：孙老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4>英语（综合）</h4>
+              <div class="meta">年级/班级：2025级 外语一班</div>
+              <div class="meta">任课老师：陈老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=思想道德与法治" style="text-decoration:none;color:inherit">思想道德与法治</a></h4>
+              <div class="meta">年级/班级：2025级 公共课</div>
+              <div class="meta">任课老师：周老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=程序设计基础" style="text-decoration:none;color:inherit">程序设计基础</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：刘老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=大学英语" style="text-decoration:none;color:inherit">大学英语</a></h4>
+              <div class="meta">年级/班级：2025级 外语一班</div>
+              <div class="meta">任课老师：张老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=数据结构" style="text-decoration:none;color:inherit">数据结构</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：钱老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=操作系统" style="text-decoration:none;color:inherit">操作系统</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：吴老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=概率论与数理统计" style="text-decoration:none;color:inherit">概率论与数理统计</a></h4>
+              <div class="meta">年级/班级：2025级 数学一班</div>
+              <div class="meta">任课老师：郑老师</div>
+            </div>
+
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=数据库原理" style="text-decoration:none;color:inherit">数据库原理</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：陈老师</div>
+            </div>
+            <div class="course-item">
+              <div class="course-rect"></div>
+              <h4><a href="course_detail.html?course=软件工程" style="text-decoration:none;color:inherit">软件工程</a></h4>
+              <div class="meta">年级/班级：2025级 计科一班</div>
+              <div class="meta">任课老师：韩老师</div>
+            </div>
+          </div>
+          
+          <!-- 学习路径规划视图（从侧边栏进入，独立于课程列表） -->
+          <section id="pathView" style="display:none; padding: 16px;">
+            <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;">
+              <!-- 左列：课程与进度/薄弱点提示 -->
+              <div class="card" style="padding:12px">
+                <div style="font-weight:600;margin-bottom:8px">我的课程与进度</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div id="course-math" onclick="switchLearningPath('高等数学（上）')" style="border:2px solid var(--primary);border-radius:10px;padding:10px;cursor:pointer;transition:all 0.2s;background:linear-gradient(135deg, #f0f9ff, #e0f2fe)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(91,124,255,0.15)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="display:flex;justify-content:space-between"><span style="font-weight:600">高等数学（上）</span><span style="color:#ef4444">薄弱：极限、导数</span></div>
+                    <div style="height:8px;background:#f1f5f9;border-radius:999px;margin-top:8px;overflow:hidden"><div style="width:48%;height:100%;background:#5b7cff"></div></div>
+                    <div style="margin-top:4px;font-size:10px;color:var(--primary)">● 当前选中</div>
+                  </div>
+                  <div id="course-physics" onclick="switchLearningPath('大学物理')" style="border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="display:flex;justify-content:space-between"><span>大学物理</span><span style="color:#16a34a">优势：力学基础</span></div>
+                    <div style="height:8px;background:#f1f5f9;border-radius:999px;margin-top:8px;overflow:hidden"><div style="width:72%;height:100%;background:#22c55e"></div></div>
+                  </div>
+                  <div id="course-computer" onclick="switchLearningPath('计算机导论')" style="border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="display:flex;justify-content:space-between"><span>计算机导论</span><span style="color:#ef4444">薄弱：二进制、逻辑门</span></div>
+                    <div style="height:8px;background:#f1f5f9;border-radius:999px;margin-top:8px;overflow:hidden"><div style="width:35%;height:100%;background:#fb7185"></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右列：学习路径图（节点含弱项，勾引进一步学习） -->
+              <div class="card" style="padding:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-weight:600" id="pathTitle">学习路径 · 高等数学（上）</div>
+                  <a id="enterClassroomBtn" href="liveroom_off.html?course=高等数学（上）&mode=live&from=schedule&status=not-started" style="text-decoration:none;color:#fff;padding:8px 12px;border-radius:8px;background:var(--primary);font-size:12px">进入课堂</a>
+                </div>
+
+                <!-- 每日智能推荐区域 -->
+                <div id="dailyRecommendation" style="background:linear-gradient(135deg, #fef3c7, #fef7e6);border:1px solid #f59e0b;border-radius:8px;padding:12px;margin:12px 0;position:relative">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    <span style="font-size:16px">🎯</span>
+                    <div style="font-weight:600;color:#b45309">今日智能推荐</div>
+                    <span style="background:#ef4444;color:#fff;border-radius:999px;padding:1px 6px;font-size:10px;font-weight:600">紧急</span>
+                  </div>
+                  <div id="recommendationText" style="color:#8a5700;font-size:13px;margin-bottom:10px">检测到极限和导数掌握薄弱，建议优先练习以下内容</div>
+                  <div id="recommendationButtons" style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onclick="showRecommendedQuestions('极限')" style="background:#ef4444;color:#fff;border:none;border-radius:16px;padding:4px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px">
+                      <span>🔥</span>极限专练 (错题率63%)
+                    </button>
+                    <button onclick="showRecommendedQuestions('导数')" style="background:#f59e0b;color:#fff;border:none;border-radius:16px;padding:4px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px">
+                      <span>⚡</span>导数强化 (错题率51%)
+                    </button>
+                    <button onclick="showDailyMixedQuestions()" style="background:#8b5cf6;color:#fff;border:none;border-radius:16px;padding:4px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px">
+                      <span>🎲</span>综合练习
+                    </button>
+                  </div>
+                  <div style="position:absolute;top:8px;right:8px;animation:pulse 2s infinite">
+                    <span style="color:#ef4444;font-size:12px">●</span>
+                  </div>
+                </div>
+                <div id="learningPathNodes" style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+                  <div style="border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafafa;position:relative">
+                    <div style="font-weight:600">极限</div>
+                    <div style="color:#ef4444;font-size:12px;margin-top:6px">错题率 63%</div>
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                      <a href="liveroom_off.html?course=高等数学（上）&mode=replay&from=schedule" style="font-size:12px">看回放巩固</a>
+                      <button onclick="showRecommendedQuestions('极限')" style="background:var(--primary);color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer">📝 专项练习</button>
+                  </div>
+                    <div style="position:absolute;top:8px;right:8px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">!</div>
+                  </div>
+                  <div style="border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafafa;position:relative">
+                    <div style="font-weight:600">导数</div>
+                    <div style="color:#ef4444;font-size:12px;margin-top:6px">错题率 51%</div>
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                      <a href="liveroom_off.html?course=高等数学（上）&mode=live&from=schedule&status=not-started" style="font-size:12px;color:var(--primary);text-decoration:none">进入课堂答疑</a>
+                      <button onclick="showRecommendedQuestions('导数')" style="background:var(--primary);color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer">📝 专项练习</button>
+                    </div>
+                    <div style="position:absolute;top:8px;right:8px;background:#f59e0b;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">!</div>
+                  </div>
+                  <div style="border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafafa">
+                    <div style="font-weight:600">微分应用</div>
+                    <div style="color:#16a34a;font-size:12px;margin-top:6px">掌握良好</div>
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                      <a href="course_detail.html?course=高等数学（上）" style="font-size:12px">刷题保持</a>
+                      <button onclick="showRecommendedQuestions('微分应用')" style="background:#22c55e;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer">🎯 巩固练习</button>
+                    </div>
+                  </div>
+                  <div style="border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafafa">
+                    <div style="font-weight:600">积分</div>
+                    <div style="color:#f59e0b;font-size:12px;margin-top:6px">一般</div>
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                      <a href="liveroom_off.html?course=高等数学（上）&mode=live&from=schedule&status=not-started" style="font-size:12px;color:var(--primary);text-decoration:none">设定学习计划</a>
+                      <button onclick="showRecommendedQuestions('积分')" style="background:#f59e0b;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer">📚 提升练习</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 智能推荐题目弹窗 -->
+                <div id="questionModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;align-items:center;justify-content:center">
+                  <div style="background:#fff;border-radius:12px;width:90%;max-width:800px;max-height:80vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,0.15)">
+                    <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                      <div>
+                        <div style="font-size:18px;font-weight:600;color:var(--text)">🎯 <span id="modalTitle">专项练习推荐</span></div>
+                        <div style="font-size:13px;color:var(--muted);margin-top:4px">根据你的学习路径智能推荐</div>
+                      </div>
+                      <button onclick="closeQuestionModal()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:4px">×</button>
+                    </div>
+                    <div id="questionContent" style="padding:20px"></div>
+                  </div>
+                </div>
+
+                <!-- 学习日程生成模块 -->
+                <div class="card" style="padding:24px;margin-top:20px;min-height:280px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <span style="font-size:32px">📅</span>
+                      <div>
+                        <div style="font-weight:600;color:var(--text);font-size:18px">智能日程生成</div>
+                        <div style="font-size:13px;color:var(--muted);margin-top:2px">基于学习路径自动安排</div>
+                      </div>
+                    </div>
+                    <button id="finalSprintBtn" onclick="alert('进入期末冲刺模式')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:none">
+                      🔥 期末冲刺
+                    </button>
+                  </div>
+
+                  <div id="scheduleContent" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #0ea5e9;border-radius:12px;padding:20px;margin-bottom:20px">
+                    <div style="font-size:16px;color:#0369a1;margin-bottom:12px;font-weight:600;display:flex;align-items:center;gap:8px">
+                      <span>📊</span> 本周生成计划
+                    </div>
+                    <div style="font-size:14px;color:var(--text);line-height:1.8;padding-left:8px">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <span style="width:6px;height:6px;background:#ef4444;border-radius:50%"></span>
+                        <span><strong>极限专项练习</strong>：周二 19:00-20:00</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <span style="width:6px;height:6px;background:#f59e0b;border-radius:50%"></span>
+                        <span><strong>导数强化训练</strong>：周四 16:00-17:30</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span style="width:6px;height:6px;background:#22c55e;border-radius:50%"></span>
+                        <span><strong>微分应用复习</strong>：周日 14:00-15:00</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:flex-start">
+                    <div>
+                      <div style="font-size:14px;color:var(--muted);margin-bottom:8px">下次更新：周日自动生成下周计划</div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <span style="background:#fef3c7;color:#b45309;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500">智能排程</span>
+                        <span style="background:#f0fdf4;color:#16a34a;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500">导出ICS</span>
+                        <span style="background:#fce7f3;color:#be185d;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500">负载均衡</span>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <button onclick="alert('生成本周学习日程')" style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;white-space:nowrap;font-weight:500">
+                        🔄 重新生成
+                      </button>
+                      <button onclick="alert('导出到日历应用')" style="background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:500">
+                        📤 导出日历
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 今日事项视图 -->
+          <section id="todayView" style="display:none;">
+            <!-- 快速学习入口 -->
+            <div class="card" style="margin-bottom: 20px;">
+              <div style="padding: 20px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                  <span style="font-size: 18px;">⚡</span>
+                  <span style="font-weight: 700; color: #0369a1; font-size: 16px;">快速学习</span>
+                </div>
+                <div class="quick-learning-buttons" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                  <button class="quick-learning-button" onclick="alert('进入在线学习')" style="background: var(--primary); color: white; border: none; border-radius: 10px; padding: 12px 20px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(91,124,255,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <span>📖</span> 开始学习
+                  </button>
+                  <button class="quick-learning-button" onclick="switchToSchedule()" style="background: #22c55e; color: white; border: none; border-radius: 10px; padding: 12px 20px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(34,197,94,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <span>📅</span> 查看课表
+                  </button>
+                  <button class="quick-learning-button" onclick="document.getElementById('linkTasks').click()" style="background: #f59e0b; color: white; border: none; border-radius: 10px; padding: 12px 20px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(245,158,11,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <span>📝</span> 我的作业
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="today-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 18px;">📅</span>
+                  <h2 style="margin: 0; font-size: 18px;">今日事项</h2>
+                </div>
+                <div style="color: var(--muted); font-size: 14px;" class="currentDateTime">
+                  2025年9月19日星期五 16:28
+                </div>
+              </div>
+              
+              <div class="today-content">
+                <!-- 左侧：今日课程 -->
+                <div class="today-courses">
+                  <div class="section-header">
+                    <span style="font-size: 16px;">📚</span>
+                    <span style="font-weight: 600;">今日课程</span>
+                    <a href="#" onclick="switchToSchedule()" style="color: var(--primary); text-decoration: none; font-size: 12px;">查看课表</a>
+                  </div>
+                  
+                  <div class="course-timeline">
+                    <div class="course-item completed">
+                      <div class="course-time">08:00 - 09:40</div>
+                      <div class="course-info">
+                        <div class="course-title">
+                          <span class="course-name">高等数学</span>
+                          <span class="course-status done">已完成</span>
+                        </div>
+                        <div class="course-details">
+                          <span>📍 数学楼A301</span>
+                          <span>👩‍🏫 王老师</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="course-item current">
+                      <div class="course-time">10:00 - 11:40</div>
+                      <div class="course-info">
+                        <div class="course-title">
+                          <span class="course-name">线性代数</span>
+                          <span class="course-status ongoing">进行中</span>
+                        </div>
+                        <div class="course-details">
+                          <span>📍 数学楼B205</span>
+                          <span>👩‍🏫 李老师</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="course-item upcoming">
+                      <div class="course-time">14:00 - 15:40</div>
+                      <div class="course-info">
+                        <div class="course-title">
+                          <span class="course-name">概率论与数理统计</span>
+                          <span class="course-status coming">未开始</span>
+                        </div>
+                        <div class="course-details">
+                          <span>📍 数学楼C102</span>
+                          <span>👩‍🏫 张老师</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 右侧：待办事项 -->
+                <div class="today-todos">
+                  <div class="section-header">
+                    <span style="font-size: 16px;">📋</span>
+                    <span style="font-weight: 600;">待办事项</span>
+                    <button onclick="addTodoItem()" style="color: var(--primary); background: none; border: none; cursor: pointer; font-size: 12px;">添加</button>
+                  </div>
+                  
+                  <div class="todo-list">
+                    <div class="todo-item urgent">
+                      <input type="checkbox" id="todo1">
+                      <label for="todo1">完成高等数学作业</label>
+                      <span class="todo-deadline">明天截止</span>
+                    </div>
+                    
+                    <div class="todo-item normal">
+                      <input type="checkbox" id="todo2">
+                      <label for="todo2">预习线性代数第三章</label>
+                      <span class="todo-deadline">3天后</span>
+                    </div>
+                    
+                    <div class="todo-item normal">
+                      <input type="checkbox" id="todo3">
+                      <label for="todo3">提交实验报告</label>
+                      <span class="todo-deadline">本周内</span>
+                    </div>
+                    
+                    <div class="todo-item normal">
+                      <input type="checkbox" id="todo5">
+                      <label for="todo5">复习概率论重点</label>
+                      <span class="todo-deadline">周五前</span>
+                    </div>
+                    
+                    <div class="todo-item completed">
+                      <input type="checkbox" id="todo4" checked>
+                      <label for="todo4">观看数据结构课程回放</label>
+                      <span class="todo-deadline">已完成</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- 我的任务视图（作业清单：未完成蓝色，已完成灰色） -->
+          <section id="tasksView" style="display:none;">
+            <div class="list">
+              <div class="item"><div><strong>实验作业：设计模式综合</strong><div style="color:var(--muted);font-size:12px">截止 周五 23:00 · 100分</div></div><span class="status status-blue">未完成</span></div>
+              <div class="item"><div><strong>编程作业：Java Web应用开发</strong><div style="color:var(--muted);font-size:12px">截止 周日 23:59 · 80分</div></div><span class="status status-blue">未完成</span></div>
+              <div class="item"><div><strong>随堂练习：行为型模式</strong><div style="color:var(--muted);font-size:12px">截止 今日 24:00 · 10分</div></div><span class="status status-gray">已完成</span></div>
+              <div class="item"><div><strong>课堂测验：数据结构基础</strong><div style="color:var(--muted);font-size:12px">截止 昨日 18:00 · 50分</div></div><span class="status status-gray">已完成</span></div>
+            </div>
+          </section>
+
+          <!-- 收件箱视图（作业提醒、老师通知） -->
+          <section id="inboxView" style="display:none;">
+            <div class="list">
+              <div class="item"><div><strong>作业提醒</strong><div style="color:var(--muted);font-size:12px">请在周五 23:00 前提交“设计模式综合”</div></div><span class="status status-blue">未读</span></div>
+              <div class="item"><div><strong>老师通知</strong><div style="color:var(--muted);font-size:12px">周三 8:30 上课时间调整为 8:50</div></div><span class="status status-gray">已读</span></div>
+              <div class="item"><div><strong>系统通知</strong><div style="color:var(--muted);font-size:12px">您有新的编程作业待完成，请及时查看</div></div><span class="status status-blue">未读</span></div>
+              <div class="item"><div><strong>成绩公布</strong><div style="color:var(--muted);font-size:12px">数据结构课堂测验成绩已公布，请查看</div></div><span class="status status-gray">已读</span></div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const scheduleView = document.getElementById('scheduleView');
+    const courseListView = document.getElementById('courseListView');
+    const tabSchedule = document.getElementById('tabSchedule');
+    const tabCourses = document.getElementById('tabCourses');
+
+    function showSchedule() {
+      scheduleView.style.display = '';
+      courseListView.style.display = 'none';
+      tabSchedule.classList.add('active');
+      tabCourses.classList.remove('active');
+      // 确保顶部控制栏显示
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      // 更新筛选器选项
+      updateFilterOptions('schedule');
+    }
+    function showCourses() {
+      scheduleView.style.display = 'none';
+      courseListView.style.display = '';
+      tabSchedule.classList.remove('active');
+      tabCourses.classList.add('active');
+      // 确保顶部控制栏显示
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      // 更新筛选器选项（课程列表视图不需要筛选）
+      updateFilterOptions('courses');
+    }
+
+    tabSchedule.addEventListener('click', showSchedule);
+    tabCourses.addEventListener('click', showCourses);
+
+    // 若通过重定向带 #courses 哈希进入，则默认打开“课程”视图
+    if (location.hash === '#courses') {
+      showCourses();
+    }
+
+    // 侧边栏：学习路径规划
+    const linkSchedule = document.getElementById('linkSchedule');
+    const linkToday = document.getElementById('linkToday');
+    const linkPath = document.getElementById('linkPath');
+    const linkTasks = document.getElementById('linkTasks');
+    const linkInbox = document.getElementById('linkInbox');
+    const todayView = document.getElementById('todayView');
+    const pathView = document.getElementById('pathView');
+    const tasksView = document.getElementById('tasksView');
+    const inboxView = document.getElementById('inboxView');
+    
+    // 处理"课程/课表"菜单项点击
+    linkSchedule?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      // 显示课表视图，隐藏其他视图
+      scheduleView.style.display = '';
+      courseListView.style.display = 'none';
+      todayView.style.display = 'none';
+      pathView.style.display = 'none';
+      tasksView.style.display = 'none';
+      inboxView.style.display = 'none';
+      // 显示顶部控制栏
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      // 激活课表标签
+      tabSchedule.classList.add('active');
+      tabCourses.classList.remove('active');
+      // 更新侧栏菜单active状态
+      document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+      linkSchedule.classList.add('active');
+      // 更新筛选器选项
+      updateFilterOptions('schedule');
+    });
+
+    // 处理"今日事项"菜单项点击
+    linkToday?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      // 显示今日事项视图，隐藏其他视图
+      scheduleView.style.display = 'none';
+      courseListView.style.display = 'none';
+      todayView.style.display = '';
+      pathView.style.display = 'none';
+      tasksView.style.display = 'none';
+      inboxView.style.display = 'none';
+      // 隐藏顶部控制栏（学期选择器、周数选择器、课表切换等）
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'none';
+      }
+      // 取消课表标签激活状态
+      tabSchedule.classList.remove('active');
+      tabCourses.classList.remove('active');
+      // 更新侧栏菜单active状态
+      document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+      linkToday.classList.add('active');
+      // 更新筛选器选项（今日事项不需要筛选）
+      updateFilterOptions('today');
+    });
+    
+    linkPath?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      // 显示路径规划视图，隐藏其他
+      scheduleView.style.display = 'none';
+      courseListView.style.display = 'none';
+      todayView.style.display = 'none';
+      tasksView.style.display = 'none';
+      inboxView.style.display = 'none';
+      pathView.style.display = '';
+      // 显示顶部控制栏
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      tabSchedule.classList.remove('active');
+      tabCourses.classList.remove('active');
+      // 更新侧栏菜单active状态
+      document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+      linkPath.classList.add('active');
+      // 更新筛选器选项（学习路径视图不需要筛选）
+      updateFilterOptions('path');
+    });
+
+    linkTasks?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      scheduleView.style.display = 'none';
+      courseListView.style.display = 'none';
+      todayView.style.display = 'none';
+      pathView.style.display = 'none';
+      inboxView.style.display = 'none';
+      tasksView.style.display = '';
+      // 显示顶部控制栏
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      tabSchedule.classList.remove('active');
+      tabCourses.classList.remove('active');
+      // 更新侧栏菜单active状态
+      document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+      linkTasks.classList.add('active');
+      // 更新筛选器选项
+      updateFilterOptions('tasks');
+    });
+
+    linkInbox?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      scheduleView.style.display = 'none';
+      courseListView.style.display = 'none';
+      todayView.style.display = 'none';
+      pathView.style.display = 'none';
+      tasksView.style.display = 'none';
+      inboxView.style.display = '';
+      // 显示顶部控制栏
+      const scheduleHeader = document.querySelector('.schedule-header');
+      if (scheduleHeader) {
+        scheduleHeader.style.display = 'grid';
+      }
+      tabSchedule.classList.remove('active');
+      tabCourses.classList.remove('active');
+      // 更新侧栏菜单active状态
+      document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+      linkInbox.classList.add('active');
+      // 更新筛选器选项
+      updateFilterOptions('inbox');
+    });
+
+    // 周数选择器（第1周-第20周），窗口显示5个项，可左右箭头切换
+    (function(){
+      const total = 20;
+      let current = 2;
+      const list = document.getElementById('wpList');
+      const all = document.getElementById('wpAll');
+      const overlay = document.getElementById('wpOverlay');
+      const closeBtn = document.getElementById('wpClose');
+      const prev = document.getElementById('wpPrev');
+      const next = document.getElementById('wpNext');
+      const toggle = document.getElementById('wpToggle');
+      const currentText = document.getElementById('wpCurrent');
+
+      function renderWindow(){
+        if(!list) return;
+        list.innerHTML = '';
+        let start = Math.max(1, Math.min(current - 2, total - 4));
+        for(let w=start; w<=Math.min(total, start+4); w++){
+          const btn = document.createElement('button');
+          btn.className = 'wp-num' + (w===current?' active':'');
+          btn.textContent = w;
+          btn.onclick = ()=>{ current = w; update(); };
+          list.appendChild(btn);
+        }
+      }
+      function renderAll(){
+        if(!all) return;
+        all.innerHTML = '';
+        for(let w=1; w<=total; w++){
+          const chip = document.createElement('button');
+          chip.className = 'wp-chip';
+          chip.textContent = '第'+w+'周';
+          chip.onclick = ()=>{ current = w; update(); };
+          all.appendChild(chip);
+        }
+      }
+      function update(){
+        renderWindow(); 
+        currentText.textContent = '第'+current+'周';
+        
+        // 控制期末冲刺按钮显示
+        const finalSprintBtn = document.getElementById('finalSprintBtn');
+        if (finalSprintBtn) {
+          if (current >= 8) {
+            finalSprintBtn.style.display = 'block';
+          } else {
+            finalSprintBtn.style.display = 'none';
+          }
+        }
+      }
+      prev?.addEventListener('click', ()=>{ if(current>1){ current--; update(); } });
+      next?.addEventListener('click', ()=>{ if(current<total){ current++; update(); } });
+      function openModal(){ renderAll(); overlay.style.display='flex'; }
+      function closeModal(){ overlay.style.display='none'; }
+      toggle?.addEventListener('click', openModal);
+      overlay?.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+      closeBtn?.addEventListener('click', closeModal);
+      update();
+    })();
+
+    // 页面加载完成后初始化筛选器选项
+    document.addEventListener('DOMContentLoaded', function() {
+      updateFilterOptions('schedule'); // 默认隐藏筛选器（课程表视图）
+      updateCurrentTime(); // 初始化时间显示
+      setInterval(updateCurrentTime, 60000); // 每分钟更新时间
+    });
+
+    // 更新当前时间显示
+    function updateCurrentTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const weekday = weekdays[now.getDay()];
+      
+      const timeString = `${year}年${month}月${date}日${weekday} ${hours}:${minutes}`;
+      
+      // 更新所有时间显示元素
+      const dateTimeElements = document.querySelectorAll('.currentDateTime, #currentDateTime');
+      dateTimeElements.forEach(element => {
+        if (element) {
+          element.textContent = timeString;
+        }
+      });
+    }
+
+    // 添加待办事项
+    function addTodoItem() {
+      const todoText = prompt('请输入待办事项：');
+      if (todoText && todoText.trim()) {
+        const todoList = document.querySelector('.todo-list');
+        const newTodoId = 'todo' + Date.now();
+        
+        const todoItem = document.createElement('div');
+        todoItem.className = 'todo-item normal';
+        todoItem.innerHTML = `
+          <input type="checkbox" id="${newTodoId}" onchange="toggleTodoStatus(this)">
+          <label for="${newTodoId}">${todoText.trim()}</label>
+          <span class="todo-deadline">刚刚添加</span>
+        `;
+        
+        // 插入到最后一个未完成项目之后
+        const completedItems = todoList.querySelectorAll('.todo-item.completed');
+        if (completedItems.length > 0) {
+          todoList.insertBefore(todoItem, completedItems[0]);
+        } else {
+          todoList.appendChild(todoItem);
+        }
+        
+        console.log('已添加新的待办事项:', todoText.trim());
+      }
+    }
+
+    // 切换待办事项状态
+    function toggleTodoStatus(checkbox) {
+      const todoItem = checkbox.closest('.todo-item');
+      const deadline = todoItem.querySelector('.todo-deadline');
+      
+      if (checkbox.checked) {
+        todoItem.classList.add('completed');
+        todoItem.classList.remove('urgent', 'normal');
+        deadline.textContent = '已完成';
+        
+        // 移动到列表末尾
+        const todoList = todoItem.parentNode;
+        todoList.appendChild(todoItem);
+      } else {
+        todoItem.classList.remove('completed');
+        todoItem.classList.add('normal');
+        deadline.textContent = '待完成';
+        
+        // 移动到未完成项目区域
+        const todoList = todoItem.parentNode;
+        const completedItems = todoList.querySelectorAll('.todo-item.completed');
+        if (completedItems.length > 1) {
+          todoList.insertBefore(todoItem, completedItems[0]);
+        } else {
+          const firstCompleted = todoList.querySelector('.todo-item.completed');
+          if (firstCompleted) {
+            todoList.insertBefore(todoItem, firstCompleted);
+          }
+        }
+      }
+    }
+
+    // 切换到课表视图
+    function switchToSchedule() {
+      // 点击课程/课表菜单项
+      if (linkSchedule) {
+        linkSchedule.click();
+      }
+    }
+
+    // 为现有的待办事项添加交互功能
+    document.addEventListener('DOMContentLoaded', function() {
+      const todoCheckboxes = document.querySelectorAll('#todayView .todo-item input[type="checkbox"]');
+      todoCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          toggleTodoStatus(this);
+        });
+      });
+    });
+
+    // 个人中心和退出功能
+    function goToProfile() {
+      window.location.href = 'profile.html';
+    }
+
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        alert('已退出登录');
+        // 这里可以添加实际的退出逻辑
+        // window.location.href = 'login.html';
+      }
+    }
+
+    // 题目推荐系统
+    const questionBank = {
+      '极限': {
+        description: '针对63%错题率的薄弱环节，为你推荐基础巩固题目',
+        difficulty: '基础强化',
+        color: '#ef4444',
+        questions: [
+          {
+            id: 1,
+            question: '求极限 lim(x→0) (sin x)/x',
+            options: ['A. 0', 'B. 1', 'C. ∞', 'D. 不存在'],
+            answer: 'B',
+            explanation: '这是重要极限公式，lim(x→0) (sin x)/x = 1',
+            type: '重要极限'
+          },
+          {
+            id: 2,
+            question: '求极限 lim(x→∞) (1 + 1/x)^x',
+            options: ['A. 1', 'B. e', 'C. ∞', 'D. 0'],
+            answer: 'B',
+            explanation: '这是第二个重要极限，结果为自然常数e',
+            type: '重要极限'
+          },
+          {
+            id: 3,
+            question: '求极限 lim(x→2) (x²-4)/(x-2)',
+            options: ['A. 0', 'B. 2', 'C. 4', 'D. 不存在'],
+            answer: 'C',
+            explanation: '分子可分解为(x-2)(x+2)，约去分母后得到x+2，当x→2时结果为4',
+            type: '0/0型极限'
+          }
+        ]
+      },
+      '导数': {
+        description: '针对51%错题率，重点练习求导法则和计算技巧',
+        difficulty: '进阶提升',
+        color: '#f59e0b',
+        questions: [
+          {
+            id: 1,
+            question: '函数 f(x) = x³ + 2x² - 5x + 1 的导数是',
+            options: ['A. 3x² + 4x - 5', 'B. x² + 4x - 5', 'C. 3x² + 2x - 5', 'D. 3x² + 4x'],
+            answer: 'A',
+            explanation: '多项式求导：每一项的导数分别为3x²、4x、-5、0',
+            type: '基本求导'
+          },
+          {
+            id: 2,
+            question: '复合函数 y = sin(2x + 1) 的导数是',
+            options: ['A. cos(2x + 1)', 'B. 2cos(2x + 1)', 'C. sin(2x)', 'D. 2sin(2x + 1)'],
+            answer: 'B',
+            explanation: '使用链式法则：外函数导数sin\'(u) = cos(u)，内函数导数(2x+1)\' = 2',
+            type: '复合函数求导'
+          },
+          {
+            id: 3,
+            question: '函数 y = x²e^x 的导数是',
+            options: ['A. 2xe^x', 'B. x²e^x', 'C. (2x + x²)e^x', 'D. 2x + e^x'],
+            answer: 'C',
+            explanation: '使用乘积法则：(uv)\' = u\'v + uv\'，得到2x·e^x + x²·e^x = (2x + x²)e^x',
+            type: '乘积法则'
+          }
+        ]
+      },
+      '微分应用': {
+        description: '保持良好状态，继续巩固微分在实际问题中的应用',
+        difficulty: '巩固保持',
+        color: '#22c55e',
+        questions: [
+          {
+            id: 1,
+            question: '曲线 y = x³ - 3x + 2 在点(1, 0)处的切线方程是',
+            options: ['A. y = 0', 'B. y = x - 1', 'C. y = -x + 1', 'D. y = 3x - 3'],
+            answer: 'A',
+            explanation: '先求导y\' = 3x² - 3，在x=1处斜率为0，所以切线方程为y = 0',
+            type: '切线方程'
+          },
+          {
+            id: 2,
+            question: '函数 f(x) = x³ - 6x² + 9x + 1 的单调递增区间是',
+            options: ['A. (-∞, 1)∪(3, +∞)', 'B. (1, 3)', 'C. (-∞, +∞)', 'D. (0, 2)'],
+            answer: 'A',
+            explanation: 'f\'(x) = 3x² - 12x + 9 = 3(x-1)(x-3)，当x<1或x>3时f\'(x)>0',
+            type: '单调性'
+          },
+          {
+            id: 3,
+            question: '函数 f(x) = x⁴ - 2x² + 3 的极值点是',
+            options: ['A. x = 0', 'B. x = ±1', 'C. x = ±2', 'D. x = 0, ±1'],
+            answer: 'D',
+            explanation: 'f\'(x) = 4x³ - 4x = 4x(x² - 1) = 4x(x-1)(x+1)，驻点为x = 0, ±1',
+            type: '极值问题'
+          }
+        ]
+      },
+      '积分': {
+        description: '提升空间较大，从基础积分公式开始强化练习',
+        difficulty: '重点提升',
+        color: '#f59e0b',
+        questions: [
+          {
+            id: 1,
+            question: '不定积分 ∫2x dx 等于',
+            options: ['A. x² + C', 'B. 2x² + C', 'C. x²/2 + C', 'D. 2x + C'],
+            answer: 'A',
+            explanation: '∫2x dx = 2∫x dx = 2 · x²/2 + C = x² + C',
+            type: '基本积分'
+          },
+          {
+            id: 2,
+            question: '定积分 ∫[0,1] 3x² dx 的值是',
+            options: ['A. 0', 'B. 1', 'C. 2', 'D. 3'],
+            answer: 'B',
+            explanation: '∫3x² dx = x³ + C，代入上下限：1³ - 0³ = 1',
+            type: '定积分计算'
+          },
+          {
+            id: 3,
+            question: '不定积分 ∫e^x dx 等于',
+            options: ['A. e^x + C', 'B. xe^x + C', 'C. e^x/x + C', 'D. ln(e^x) + C'],
+            answer: 'A',
+            explanation: '指数函数的积分就是其本身：∫e^x dx = e^x + C',
+            type: '指数积分'
+          }
+        ]
+      }
+    };
+
+    function showRecommendedQuestions(topic) {
+      const modal = document.getElementById('questionModal');
+      const title = document.getElementById('modalTitle');
+      const content = document.getElementById('questionContent');
+      
+      const topicData = questionBank[topic];
+      if (!topicData) return;
+
+      title.textContent = `${topic} - ${topicData.difficulty}`;
+      
+      let html = `
+        <div style="background:linear-gradient(135deg, ${topicData.color}15, ${topicData.color}08);border:1px solid ${topicData.color}30;border-radius:8px;padding:12px;margin-bottom:20px">
+          <div style="color:${topicData.color};font-weight:600;margin-bottom:4px">📊 学习分析</div>
+          <div style="color:var(--text);font-size:14px">${topicData.description}</div>
+        </div>
+        
+        <div style="margin-bottom:16px">
+          <div style="font-weight:600;margin-bottom:8px">🎯 推荐练习题目</div>
+          <div style="color:var(--muted);font-size:13px">根据你的薄弱环节智能推荐，完成后系统会自动记录学习进度</div>
+        </div>
+      `;
+
+      topicData.questions.forEach((q, index) => {
+        html += `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;background:#fff">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="background:${topicData.color};color:#fff;border-radius:4px;padding:2px 6px;font-size:11px">${q.type}</span>
+              <span style="color:var(--muted);font-size:12px">题目 ${index + 1}</span>
+            </div>
+            
+            <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${q.question}</div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              ${q.options.map(option => `
+                <label style="display:flex;align-items:center;gap:6px;padding:6px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s" 
+                       onmouseover="this.style.background='#f8fafc'" 
+                       onmouseout="this.style.background='#fff'">
+                  <input type="radio" name="q${q.id}" value="${option[0]}" style="margin:0">
+                  <span style="font-size:13px">${option}</span>
+                </label>
+              `).join('')}
+            </div>
+            
+            <div style="display:flex;gap:8px">
+              <button onclick="checkAnswer(${q.id}, '${q.answer}', '${q.explanation}')" 
+                      style="background:var(--primary);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">
+                检查答案
+              </button>
+              <div id="result${q.id}" style="display:none;padding:8px;border-radius:6px;font-size:12px"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div style="margin-top:20px;padding:16px;background:linear-gradient(135deg, #f0f9ff, #e0f2fe);border:1px solid #0ea5e9;border-radius:8px">
+          <div style="font-weight:600;color:#0369a1;margin-bottom:8px">💡 学习建议</div>
+          <div style="color:var(--text);font-size:13px;line-height:1.4">
+            完成练习后建议：<br>
+            • 错题要及时复习，理解解题思路<br>
+            • 可以观看相关课程回放加深理解<br>
+            • 定期重做错题，确保真正掌握
+          </div>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      modal.style.display = 'flex';
+      
+      // 记录推荐行为
+      console.log(`为用户推荐了${topic}相关题目，共${topicData.questions.length}道`);
+    }
+
+    function checkAnswer(questionId, correctAnswer, explanation) {
+      const selectedOption = document.querySelector(`input[name="q${questionId}"]:checked`);
+      const resultDiv = document.getElementById(`result${questionId}`);
+      
+      if (!selectedOption) {
+        alert('请先选择一个答案');
+        return;
+      }
+      
+      const userAnswer = selectedOption.value;
+      const isCorrect = userAnswer === correctAnswer;
+      
+      resultDiv.style.display = 'block';
+      
+      if (isCorrect) {
+        resultDiv.style.background = '#dcfce7';
+        resultDiv.style.color = '#166534';
+        resultDiv.style.border = '1px solid #bbf7d0';
+        resultDiv.innerHTML = `✅ 回答正确！<br><span style="font-size:11px">${explanation}</span>`;
+      } else {
+        resultDiv.style.background = '#fee2e2';
+        resultDiv.style.color = '#991b1b';
+        resultDiv.style.border = '1px solid #fecaca';
+        resultDiv.innerHTML = `❌ 答案错误，正确答案是 ${correctAnswer}<br><span style="font-size:11px">${explanation}</span>`;
+      }
+    }
+
+    function closeQuestionModal() {
+      document.getElementById('questionModal').style.display = 'none';
+    }
+
+    function showDailyMixedQuestions() {
+      const modal = document.getElementById('questionModal');
+      const title = document.getElementById('modalTitle');
+      const content = document.getElementById('questionContent');
+      
+      title.textContent = '综合练习 - 每日推荐';
+      
+      // 从最薄弱的两个科目中各选一题
+      const limitQuestion = questionBank['极限'].questions[0];
+      const derivativeQuestion = questionBank['导数'].questions[0];
+      
+      let html = `
+        <div style="background:linear-gradient(135deg, #f3e8ff, #ede9fe);border:1px solid #8b5cf6;border-radius:8px;padding:12px;margin-bottom:20px">
+          <div style="color:#7c3aed;font-weight:600;margin-bottom:4px">🎲 智能组合练习</div>
+          <div style="color:var(--text);font-size:14px">根据你的薄弱环节，为你精选了极限和导数的重点题目，建议在15分钟内完成</div>
+        </div>
+        
+        <div style="margin-bottom:16px">
+          <div style="font-weight:600;margin-bottom:8px">🎯 今日练习计划 (共2题)</div>
+          <div style="color:var(--muted);font-size:13px">完成后将更新你的学习进度，优秀表现将解锁新的学习内容</div>
+        </div>
+      `;
+
+      // 极限题目
+      html += `
+        <div style="border:1px solid #ef4444;border-radius:10px;padding:16px;margin-bottom:12px;background:#fff">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="background:#ef4444;color:#fff;border-radius:4px;padding:2px 6px;font-size:11px">极限 - 重要极限</span>
+            <span style="color:var(--muted);font-size:12px">薄弱环节专练</span>
+            <span style="background:#fef3c7;color:#b45309;border-radius:4px;padding:1px 4px;font-size:10px">高优先级</span>
+          </div>
+          
+          <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${limitQuestion.question}</div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            ${limitQuestion.options.map(option => `
+              <label style="display:flex;align-items:center;gap:6px;padding:6px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s" 
+                     onmouseover="this.style.background='#fef2f2'" 
+                     onmouseout="this.style.background='#fff'">
+                <input type="radio" name="mixed_q1" value="${option[0]}" style="margin:0">
+                <span style="font-size:13px">${option}</span>
+              </label>
+            `).join('')}
+          </div>
+          
+          <div style="display:flex;gap:8px">
+            <button onclick="checkMixedAnswer(1, '${limitQuestion.answer}', '${limitQuestion.explanation}')" 
+                    style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">
+              检查答案
+            </button>
+            <div id="mixedResult1" style="display:none;padding:8px;border-radius:6px;font-size:12px"></div>
+          </div>
+        </div>
+      `;
+
+      // 导数题目
+      html += `
+        <div style="border:1px solid #f59e0b;border-radius:10px;padding:16px;margin-bottom:12px;background:#fff">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="background:#f59e0b;color:#fff;border-radius:4px;padding:2px 6px;font-size:11px">导数 - 基本求导</span>
+            <span style="color:var(--muted);font-size:12px">薄弱环节专练</span>
+            <span style="background:#fff7e6;color:#b45309;border-radius:4px;padding:1px 4px;font-size:10px">中优先级</span>
+          </div>
+          
+          <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${derivativeQuestion.question}</div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            ${derivativeQuestion.options.map(option => `
+              <label style="display:flex;align-items:center;gap:6px;padding:6px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s" 
+                     onmouseover="this.style.background='#fffbeb'" 
+                     onmouseout="this.style.background='#fff'">
+                <input type="radio" name="mixed_q2" value="${option[0]}" style="margin:0">
+                <span style="font-size:13px">${option}</span>
+              </label>
+            `).join('')}
+          </div>
+          
+          <div style="display:flex;gap:8px">
+            <button onclick="checkMixedAnswer(2, '${derivativeQuestion.answer}', '${derivativeQuestion.explanation}')" 
+                    style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">
+              检查答案
+            </button>
+            <div id="mixedResult2" style="display:none;padding:8px;border-radius:6px;font-size:12px"></div>
+          </div>
+        </div>
+      `;
+
+      html += `
+        <div style="margin-top:20px;padding:16px;background:linear-gradient(135deg, #f0f9ff, #e0f2fe);border:1px solid #0ea5e9;border-radius:8px">
+          <div style="font-weight:600;color:#0369a1;margin-bottom:8px">📈 学习目标</div>
+          <div style="color:var(--text);font-size:13px;line-height:1.4">
+            完成今日综合练习后：<br>
+            • 极限错题率有望从63%降至50%以下<br>
+            • 导数错题率有望从51%降至40%以下<br>
+            • 解锁更高难度的微分应用题目
+          </div>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      modal.style.display = 'flex';
+      
+      // 记录综合练习启动
+      console.log('用户开始综合练习，包含极限和导数题目各1道');
+    }
+
+    function checkMixedAnswer(questionNum, correctAnswer, explanation) {
+      const selectedOption = document.querySelector(`input[name="mixed_q${questionNum}"]:checked`);
+      const resultDiv = document.getElementById(`mixedResult${questionNum}`);
+      
+      if (!selectedOption) {
+        alert('请先选择一个答案');
+        return;
+      }
+      
+      const userAnswer = selectedOption.value;
+      const isCorrect = userAnswer === correctAnswer;
+      
+      resultDiv.style.display = 'block';
+      
+      if (isCorrect) {
+        resultDiv.style.background = '#dcfce7';
+        resultDiv.style.color = '#166534';
+        resultDiv.style.border = '1px solid #bbf7d0';
+        resultDiv.innerHTML = `✅ 正确！+10分<br><span style="font-size:11px">${explanation}</span>`;
+      } else {
+        resultDiv.style.background = '#fee2e2';
+        resultDiv.style.color = '#991b1b';
+        resultDiv.style.border = '1px solid #fecaca';
+        resultDiv.innerHTML = `❌ 错误，正确答案是 ${correctAnswer}<br><span style="font-size:11px">${explanation}</span>`;
+      }
+    }
+
+    // 学习路径数据配置
+    const learningPathData = {
+      '高等数学（上）': {
+        recommendation: {
+          text: '检测到极限和导数掌握薄弱，建议优先练习以下内容',
+          buttons: [
+            { topic: '极限', label: '极限专练 (错题率63%)', color: '#ef4444', icon: '🔥' },
+            { topic: '导数', label: '导数强化 (错题率51%)', color: '#f59e0b', icon: '⚡' },
+            { topic: '综合', label: '综合练习', color: '#8b5cf6', icon: '🎲' }
+          ]
+        },
+        nodes: [
+          { name: '极限', status: '错题率 63%', color: '#ef4444', action: 'showRecommendedQuestions("极限")', links: [{ text: '看回放巩固', href: 'liveroom_off.html?course=高等数学（上）&mode=replay&from=schedule' }] },
+          { name: '导数', status: '错题率 51%', color: '#ef4444', action: 'showRecommendedQuestions("导数")', links: [{ text: '进入课堂答疑', href: 'liveroom_off.html?course=高等数学（上）&mode=live&from=schedule&status=not-started' }] },
+          { name: '微分应用', status: '掌握良好', color: '#16a34a', action: 'showRecommendedQuestions("微分应用")', links: [{ text: '刷题保持', href: 'course_detail.html?course=高等数学（上）' }] },
+          { name: '积分', status: '一般', color: '#f59e0b', action: 'showRecommendedQuestions("积分")', links: [{ text: '设定学习计划', href: 'liveroom_off.html?course=高等数学（上）&mode=live&from=schedule&status=not-started' }] }
+        ],
+        schedule: [
+          { name: '极限专项练习', time: '周二 19:00-20:00', color: '#ef4444' },
+          { name: '导数强化训练', time: '周四 16:00-17:30', color: '#f59e0b' },
+          { name: '微分应用复习', time: '周日 14:00-15:00', color: '#22c55e' }
+        ]
+      },
+      '大学物理': {
+        recommendation: {
+          text: '力学基础扎实，建议重点关注电学和光学内容',
+          buttons: [
+            { topic: '电学', label: '电学强化 (掌握度78%)', color: '#f59e0b', icon: '⚡' },
+            { topic: '光学', label: '光学练习 (掌握度65%)', color: '#8b5cf6', icon: '🔬' },
+            { topic: '力学', label: '力学巩固', color: '#22c55e', icon: '💪' }
+          ]
+        },
+        nodes: [
+          { name: '力学', status: '掌握良好', color: '#16a34a', action: 'alert("力学巩固练习")', links: [{ text: '持续练习', href: '#' }] },
+          { name: '热学', status: '掌握度 82%', color: '#16a34a', action: 'alert("热学练习")', links: [{ text: '观看实验', href: '#' }] },
+          { name: '电学', status: '需要加强', color: '#f59e0b', action: 'alert("电学强化")', links: [{ text: '电路分析', href: '#' }] },
+          { name: '光学', status: '待提升', color: '#8b5cf6', action: 'alert("光学练习")', links: [{ text: '实验操作', href: '#' }] }
+        ],
+        schedule: [
+          { name: '力学实验复习', time: '周一 14:00-16:00', color: '#22c55e' },
+          { name: '电路分析练习', time: '周三 19:00-20:30', color: '#f59e0b' },
+          { name: '光学实验预习', time: '周六 10:00-11:30', color: '#8b5cf6' }
+        ]
+      },
+      '计算机导论': {
+        recommendation: {
+          text: '二进制和逻辑门概念薄弱，建议从基础开始强化',
+          buttons: [
+            { topic: '二进制', label: '二进制专练 (错题率71%)', color: '#ef4444', icon: '🔢' },
+            { topic: '逻辑门', label: '逻辑门强化 (错题率58%)', color: '#f59e0b', icon: '⚡' },
+            { topic: '综合', label: '综合练习', color: '#8b5cf6', icon: '💻' }
+          ]
+        },
+        nodes: [
+          { name: '二进制', status: '错题率 71%', color: '#ef4444', action: 'alert("二进制专项练习")', links: [{ text: '基础概念', href: '#' }] },
+          { name: '逻辑门', status: '错题率 58%', color: '#f59e0b', action: 'alert("逻辑门练习")', links: [{ text: '电路设计', href: '#' }] },
+          { name: '算法基础', status: '掌握度 45%', color: '#f59e0b', action: 'alert("算法练习")', links: [{ text: '流程图', href: '#' }] },
+          { name: '程序设计', status: '待学习', color: '#6b7280', action: 'alert("程序设计入门")', links: [{ text: '编程基础', href: '#' }] }
+        ],
+        schedule: [
+          { name: '二进制转换练习', time: '周一 18:00-19:00', color: '#ef4444' },
+          { name: '逻辑门电路设计', time: '周四 15:00-16:30', color: '#f59e0b' },
+          { name: '算法思维训练', time: '周六 9:00-10:30', color: '#8b5cf6' }
+        ]
+      }
+    };
+
+    let currentCourse = '高等数学（上）';
+
+    function updateCourseSelection(courseName) {
+      // 重置所有课程卡片样式并清除选中提示
+      const allCourses = ['course-math', 'course-physics', 'course-computer'];
+      allCourses.forEach(courseId => {
+        const element = document.getElementById(courseId);
+        element.style.border = '1px solid var(--border)';
+        element.style.background = '#fff';
+        
+        // 清除所有"当前选中"提示
+        const indicators = element.querySelectorAll('div');
+        indicators.forEach(div => {
+          if (div.textContent.includes('当前选中')) {
+            div.remove();
+          }
+        });
+      });
+
+      // 设置选中课程的样式
+      let selectedElement;
+      if (courseName === '高等数学（上）') {
+        selectedElement = document.getElementById('course-math');
+      } else if (courseName === '大学物理') {
+        selectedElement = document.getElementById('course-physics');
+      } else if (courseName === '计算机导论') {
+        selectedElement = document.getElementById('course-computer');
+      }
+
+      if (selectedElement) {
+        selectedElement.style.border = '2px solid var(--primary)';
+        selectedElement.style.background = 'linear-gradient(135deg, #f0f9ff, #e0f2fe)';
+        
+        // 添加选中提示
+        const indicator = document.createElement('div');
+        indicator.style.cssText = 'margin-top:4px;font-size:10px;color:var(--primary)';
+        indicator.textContent = '● 当前选中';
+        selectedElement.appendChild(indicator);
+      }
+    }
+
+    function updateLearningPathContent(courseName) {
+      const pathData = learningPathData[courseName];
+      if (!pathData) return;
+
+      // 更新标题
+      document.getElementById('pathTitle').textContent = `学习路径 · ${courseName}`;
+      document.getElementById('enterClassroomBtn').href = `liveroom_off.html?course=${encodeURIComponent(courseName)}&mode=live&from=schedule&status=not-started`;
+
+      // 更新推荐内容
+      document.getElementById('recommendationText').textContent = pathData.recommendation.text;
+      
+      const buttonsContainer = document.getElementById('recommendationButtons');
+      buttonsContainer.innerHTML = pathData.recommendation.buttons.map(btn => 
+        `<button onclick="${btn.topic === '综合' ? 'showDailyMixedQuestions()' : `showRecommendedQuestions('${btn.topic}')`}" style="background:${btn.color};color:#fff;border:none;border-radius:16px;padding:4px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px">
+          <span>${btn.icon}</span>${btn.label}
+        </button>`
+      ).join('');
+
+      // 更新学习节点
+      const nodesContainer = document.getElementById('learningPathNodes');
+      nodesContainer.innerHTML = pathData.nodes.map(node => 
+        `<div style="border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafafa${node.color === '#ef4444' ? ';position:relative' : ''}">
+          <div style="font-weight:600">${node.name}</div>
+          <div style="color:${node.color};font-size:12px;margin-top:6px">${node.status}</div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            ${node.links.map(link => `<a href="${link.href}" style="font-size:12px${link.href.includes('mode=live') && !link.href.includes('status=not-started') ? ';color:var(--primary);text-decoration:none' : ''}">${link.text}</a>`).join('')}
+            <button onclick="${node.action}" style="background:${node.color === '#16a34a' ? '#22c55e' : node.color === '#ef4444' ? 'var(--primary)' : node.color};color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer">${node.color === '#16a34a' ? '🎯 巩固练习' : node.color === '#ef4444' ? '📝 专项练习' : '📚 提升练习'}</button>
+          </div>
+          ${node.color === '#ef4444' ? '<div style="position:absolute;top:8px;right:8px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">!</div>' : ''}
+        </div>`
+      ).join('');
+
+      
+
+      // 更新日程内容
+      const scheduleContainer = document.getElementById('scheduleContent');
+      scheduleContainer.innerHTML = `
+        <div style="font-size:16px;color:#0369a1;margin-bottom:12px;font-weight:600;display:flex;align-items:center;gap:8px">
+          <span>📊</span> 本周生成计划
+        </div>
+        <div style="font-size:14px;color:var(--text);line-height:1.8;padding-left:8px">
+          ${pathData.schedule.map(item => 
+            `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="width:6px;height:6px;background:${item.color};border-radius:50%"></span>
+              <span><strong>${item.name}</strong>：${item.time}</span>
+            </div>`
+          ).join('')}
+        </div>
+      `;
+    }
+
+    function switchLearningPath(courseName) {
+      currentCourse = courseName;
+      updateCourseSelection(courseName);
+      updateLearningPathContent(courseName);
+      console.log(`切换到课程: ${courseName}`);
+    }
+
+    // 更新筛选器选项根据当前视图
+    function updateFilterOptions(viewType) {
+      const statusFilter = document.getElementById('statusFilter');
+      if (!statusFilter) return;
+
+      let options = '';
+      
+      switch(viewType) {
+        case 'tasks':
+          options = `
+            <option value="all">所有状态</option>
+            <option value="status-blue">未完成</option>
+            <option value="status-gray">已完成</option>
+          `;
+          statusFilter.style.display = 'inline-block';
+          statusFilter.disabled = false;
+          break;
+        case 'inbox':
+          options = `
+            <option value="all">所有状态</option>
+            <option value="status-blue">未读</option>
+            <option value="status-gray">已读</option>
+          `;
+          statusFilter.style.display = 'inline-block';
+          statusFilter.disabled = false;
+          break;
+        case 'schedule':
+        case 'courses':
+        case 'path':
+        case 'today':
+        default:
+          // 课表、课程列表、学习路径和今日事项视图不显示筛选器
+          statusFilter.style.display = 'none';
+          options = `<option value="all">所有状态</option>`;
+          break;
+      }
+      
+      statusFilter.innerHTML = options;
+      // 重置为"所有状态"并显示所有项目
+      statusFilter.value = 'all';
+      resetAllItemsDisplay();
+    }
+
+    // 重置所有项目显示状态
+    function resetAllItemsDisplay() {
+      // 重置任务
+      document.querySelectorAll('#tasksView .item').forEach(item => {
+        item.style.display = 'flex';
+      });
+      
+      // 重置收件箱
+      document.querySelectorAll('#inboxView .item').forEach(item => {
+        item.style.display = 'flex';
+      });
+    }
+
+    // 状态筛选功能
+    function filterByStatus() {
+      const filterValue = document.getElementById('statusFilter').value;
+      
+      // 如果选择"所有状态"，重置显示并返回
+      if (filterValue === 'all') {
+        resetAllItemsDisplay();
+        console.log('已重置所有筛选，显示所有项目');
+        return;
+      }
+      
+      // 检测当前视图
+      const tasksView = document.getElementById('tasksView');
+      const inboxView = document.getElementById('inboxView');
+      
+      if (tasksView && tasksView.style.display !== 'none') {
+        // 我的任务视图筛选
+        const allTasks = document.querySelectorAll('#tasksView .item');
+        allTasks.forEach(task => {
+          const statusSpan = task.querySelector('.status');
+          if (statusSpan && statusSpan.classList.contains(filterValue)) {
+            task.style.display = 'flex';
+          } else {
+            task.style.display = 'none';
+          }
+        });
+        console.log(`任务筛选: ${filterValue}`);
+      } else if (inboxView && inboxView.style.display !== 'none') {
+        // 收件箱视图筛选
+        const allMails = document.querySelectorAll('#inboxView .item');
+        allMails.forEach(mail => {
+          const statusSpan = mail.querySelector('.status');
+          if (statusSpan && statusSpan.classList.contains(filterValue)) {
+            mail.style.display = 'flex';
+          } else {
+            mail.style.display = 'none';
+          }
+        });
+        console.log(`收件箱筛选: ${filterValue}`);
+      }
+    }
+  </script>
+  <script src="ai-widget.js"></script>
+</body>
+</html>
+
+
