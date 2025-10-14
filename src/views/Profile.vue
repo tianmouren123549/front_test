@@ -296,7 +296,7 @@
               <el-input
                 v-model="passwordForm.newPassword"
                 type="password"
-                placeholder="请输入新密码"
+                placeholder="请输入新密码（6-20位）"
                 style="width: 300px"
                 show-password
               />
@@ -306,7 +306,7 @@
               <el-input
                 v-model="passwordForm.confirmPassword"
                 type="password"
-                placeholder="请再次输入新密码"
+                placeholder="请再次输入新密码（6-20位）"
                 style="width: 300px"
                 show-password
               />
@@ -477,6 +477,14 @@ const changePassword = () => {
   }
   if (!passwordForm.value.newPassword) {
     ElMessage.warning('请输入新密码');
+    return;
+  }
+  if (passwordForm.value.newPassword.length < 6) {
+    ElMessage.warning('新密码长度不能少于6位');
+    return;
+  }
+  if (passwordForm.value.newPassword.length > 20) {
+    ElMessage.warning('新密码长度不能超过20位');
     return;
   }
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {

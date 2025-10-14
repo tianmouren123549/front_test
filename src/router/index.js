@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
 import Login from '../views/Login.vue';
+import ForgotPassword from '../views/ForgotPassword.vue';
 import StudentLayout from '../views/StudentLayout.vue';
 import StudentDashboard from '../views/StudentDashboard.vue';
 import CourseDetail from '../views/CourseDetail.vue';
@@ -21,6 +22,14 @@ const routes = [
     component: Login,
     meta: {
       title: '登录 - 北泽智慧教学平台',
+    },
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
+    meta: {
+      title: '找回密码 - 北泽智慧教学平台',
     },
   },
   {

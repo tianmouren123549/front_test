@@ -467,10 +467,7 @@ const handleLogin = async () => {
 
 // 忘记密码
 const handleForgotPassword = () => {
-  ElMessage.info({
-    message: '请联系系统管理员重置密码\n管理员电话：010-12345678',
-    duration: 3000,
-  });
+  router.push('/forgot-password');
 };
 
 // 返回首页
