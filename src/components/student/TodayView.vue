@@ -1,67 +1,12 @@
 <style scoped>
 /* 今日事项视图 */
 .today-view {
-  padding: 20px 24px;
-}
-
-/* 快速学习卡片 */
-.quick-learning-card {
-  margin-bottom: 20px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-  border-radius: 12px;
-}
-
-.quick-learning-header {
+  padding: 0;
+  height: 100%;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.quick-learning-title {
-  font-weight: 700;
-  color: #0369a1;
-  font-size: 16px;
-}
-
-.quick-learning-buttons {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.quick-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 20px;
-  font-size: 15px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.quick-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.quick-btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.quick-btn-success {
-  background: #22c55e;
-  color: white;
-}
-
-.quick-btn-warning {
-  background: #f59e0b;
-  color: white;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* 今日事项主卡片 */
@@ -70,6 +15,11 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
+  flex: 6;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 16px 20px 0 20px;
 }
 
 .today-header {
@@ -101,7 +51,10 @@
   display: grid;
   grid-template-columns: 3fr 2fr;
   gap: 24px;
-  padding: 20px;
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* 今日课程 */
@@ -141,31 +94,32 @@
   display: flex;
   gap: 16px;
   padding: 16px;
-  border-radius: 10px;
-  border-left: 4px solid #e5e7eb;
-  background: #fafafa;
+  border-radius: 6px;
+  border-left: 3px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left-width: 3px;
   transition: all 0.2s ease;
 }
 
 .course-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateX(2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .course-item.completed {
   border-left-color: #22c55e;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  background: #ffffff;
 }
 
 .course-item.current {
   border-left-color: #f59e0b;
-  background: linear-gradient(135deg, #fffbeb, #fef3c7);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);
 }
 
 .course-item.upcoming {
   border-left-color: #3b82f6;
-  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  background: #ffffff;
 }
 
 .course-time {
@@ -194,24 +148,28 @@
 
 .course-status {
   padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid;
 }
 
 .course-status.done {
-  background: #22c55e;
-  color: white;
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
 }
 
 .course-status.ongoing {
-  background: #f59e0b;
-  color: white;
+  background: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
 }
 
 .course-status.coming {
-  background: #3b82f6;
-  color: white;
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
 }
 
 .course-details {
@@ -244,17 +202,18 @@
 }
 
 .todo-item.urgent {
-  border-left: 4px solid #3b82f6;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-left: 3px solid #3b82f6;
+  background: #ffffff;
 }
 
 .todo-item.normal {
-  border-left: 4px solid #3b82f6;
+  border-left: 3px solid #d1d5db;
+  background: #ffffff;
 }
 
 .todo-item.overdue {
-  border-left: 4px solid #dc2626;
-  background: linear-gradient(135deg, #fef2f2, #fecaca);
+  border-left: 3px solid #dc2626;
+  background: #ffffff;
 }
 
 .todo-item.completed {
@@ -302,6 +261,65 @@
   font-weight: 600;
 }
 
+/* 智能推荐区域 */
+.smart-recommendation {
+  margin: 12px 20px 20px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  flex: 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.recommendation-icon {
+  font-size: 18px;
+}
+
+.recommendation-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.recommendation-badge {
+  padding: 2px 6px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  border: 1px solid #fecaca;
+}
+
+.recommendation-content {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.recommendation-placeholder {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
 /* 响应式 */
 @media (max-width: 1200px) {
   .today-content {
@@ -312,7 +330,7 @@
 
 @media (max-width: 860px) {
   .today-view {
-    padding: 16px;
+    padding: 12px;
   }
 
   .today-content {
@@ -328,23 +346,20 @@
     padding: 10px;
   }
 
-  .quick-learning-buttons {
-    flex-direction: column;
-    gap: 12px;
+  .smart-recommendation {
+    margin-top: 12px;
+    padding: 14px 16px;
   }
 
-  .quick-btn {
-    width: 100%;
-    justify-content: center;
+  .recommendation-placeholder {
+    padding: 20px 16px;
   }
 }
 </style>
 
 <script setup>
-import { ref, inject, onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { ElMessage } from 'element-plus';
-
-const switchView = inject('switchView');
 
 // 当前日期时间
 const currentDateTime = ref('');
@@ -476,19 +491,6 @@ const todoItems = ref([
 ]);
 // ==================== 🔴 模拟数据 END ====================
 
-// 快速操作
-const handleStartLearning = () => {
-  ElMessage.info('进入在线学习功能开发中');
-};
-
-const handleViewSchedule = () => {
-  switchView('schedule');
-};
-
-const handleViewTasks = () => {
-  switchView('tasks');
-};
-
 // 添加待办事项
 const handleAddTodo = () => {
   ElMessage.info('添加待办事项功能开发中');
@@ -580,33 +582,10 @@ const formatTimeRange = (start, end) => {
 
 <template>
   <div class="today-view">
-    <!-- 快速学习入口 -->
-    <div class="quick-learning-card">
-      <div class="quick-learning-header">
-        <span style="font-size: 18px">⚡</span>
-        <span class="quick-learning-title">快速学习</span>
-      </div>
-      <div class="quick-learning-buttons">
-        <button
-          class="quick-btn quick-btn-primary"
-          @click="handleStartLearning"
-        >
-          <span>查看错题</span>
-        </button>
-        <button class="quick-btn quick-btn-success" @click="handleViewSchedule">
-          <span>查看课表</span>
-        </button>
-        <button class="quick-btn quick-btn-warning" @click="handleViewTasks">
-          <span>我的作业</span>
-        </button>
-      </div>
-    </div>
-
     <!-- 今日事项主卡片 -->
     <div class="today-card">
       <div class="today-header">
         <div class="today-header-left">
-          <span style="font-size: 18px">📅</span>
           <h2>今日事项</h2>
         </div>
         <div class="today-datetime">{{ currentDateTime }}</div>
@@ -617,7 +596,6 @@ const formatTimeRange = (start, end) => {
         <div class="today-courses">
           <div class="section-header">
             <div class="section-title">
-              <span>📚</span>
               <span>今日课程</span>
             </div>
             <a class="section-link" @click="handleViewSchedule">查看课表</a>
@@ -656,8 +634,8 @@ const formatTimeRange = (start, end) => {
                   </span>
                 </div>
                 <div class="course-details">
-                  <span>🏢 {{ course.classroom_name }}</span>
-                  <span>🧑‍🏫 {{ course.teacher_name }}</span>
+                  <span>教室：{{ course.classroom_name }}</span>
+                  <span>教师：{{ course.teacher_name }}</span>
                 </div>
               </div>
             </div>
@@ -668,7 +646,6 @@ const formatTimeRange = (start, end) => {
         <div class="today-todos">
           <div class="section-header">
             <div class="section-title">
-              <span>📋</span>
               <span>待办事项</span>
             </div>
             <a class="section-link" @click="handleAddTodo">添加</a>
@@ -713,6 +690,19 @@ const formatTimeRange = (start, end) => {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 智能推荐区域（预留） -->
+    <div class="smart-recommendation">
+      <div class="recommendation-header">
+        <span class="recommendation-title">今日智能推荐</span>
+        <span class="recommendation-badge">暂定</span>
+      </div>
+      <div class="recommendation-content">
+        <div class="recommendation-placeholder">
+          该功能正在开发中，敬请期待...
         </div>
       </div>
     </div>

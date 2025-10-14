@@ -6,17 +6,17 @@
 }
 
 .sidebar {
-  width: 200px;
+  width: 257px; /* 统一宽度 */
   background: #fff;
   border-right: 1px solid #e5e7eb;
-  padding: 20px 16px;
+  padding: 20px 16px; /* 统一内边距 */
   flex-shrink: 0;
 }
 
 .brand {
   font-weight: 700;
   color: #64748b;
-  font-size: 14px;
+  font-size: 16px; /* 统一字体大小 */
   margin-bottom: 16px;
 }
 
@@ -27,12 +27,13 @@
 }
 
 .menu-item {
-  padding: 10px 12px;
+  padding: 12px 14px; /* 统一内边距 */
   border-radius: 8px;
   color: #334155;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 15px; /* 统一字体大小 */
+  font-weight: 500; /* 统一字体粗细 */
 }
 
 .menu-item:hover {
@@ -42,7 +43,7 @@
 .menu-item.active {
   background: #f1f5f9;
   color: var(--primary-color);
-  font-weight: 600;
+  font-weight: 600; /* 统一激活时粗细 */
 }
 
 .main-content {
@@ -800,19 +801,19 @@ const getExamStatusText = totalScore => {
           :class="['menu-item', { active: activeView === 'learning' }]"
           @click="switchView('learning')"
         >
-          📚 学习记录
+          学习记录
         </div>
         <div
           :class="['menu-item', { active: activeView === 'chapters' }]"
           @click="switchView('chapters')"
         >
-          📖 章节内容
+          章节内容
         </div>
         <div
           :class="['menu-item', { active: activeView === 'tasks' }]"
           @click="switchView('tasks')"
         >
-          📋 课程任务
+          课程任务
         </div>
       </div>
     </aside>

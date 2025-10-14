@@ -151,16 +151,15 @@
   color: var(--white);
   border: none;
   padding: 10px 25px;
-  border-radius: var(--radius-xl);
+  border-radius: 999px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all 0.35s var(--ease-in-out);
-  box-shadow: var(--shadow-accent);
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.3);
   letter-spacing: 0.3px;
   position: relative;
   overflow: hidden;
-  border: 2px solid transparent;
   white-space: nowrap;
   min-width: 70px;
   text-align: center;
@@ -180,6 +179,7 @@
     transparent
   );
   transition: left var(--transition-slower);
+  border-radius: 999px;
 }
 
 .navbar-login-btn:hover::before {
@@ -187,15 +187,14 @@
 }
 
 .navbar-login-btn:hover {
-  background: linear-gradient(45deg, var(--accent-dark), var(--accent-darker));
+  background: linear-gradient(45deg, #00a8cc, #0097b2);
   transform: translateY(-3px) scale(1.05);
-  box-shadow: var(--shadow-accent-hover);
-  border-color: var(--white-30);
+  box-shadow: 0 6px 20px rgba(0, 184, 217, 0.4);
 }
 
 .navbar-login-btn:active {
   transform: translateY(-1px) scale(1.02);
-  box-shadow: var(--shadow-accent);
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.3);
 }
 
 /* 移除导航栏装饰动画，保持简约 */

@@ -4,6 +4,7 @@ import Login from '../views/Login.vue';
 import StudentLayout from '../views/StudentLayout.vue';
 import StudentDashboard from '../views/StudentDashboard.vue';
 import CourseDetail from '../views/CourseDetail.vue';
+import Profile from '../views/Profile.vue';
 
 const routes = [
   {
@@ -46,6 +47,14 @@ const routes = [
     component: CourseDetail,
     meta: {
       title: '课程详情 - 北泽智慧教学平台',
+    },
+  },
+  {
+    path: '/student/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: {
+      title: '个人中心 - 北泽智慧教学平台',
     },
   },
 ];

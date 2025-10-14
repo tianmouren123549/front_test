@@ -9,8 +9,9 @@ body {
 /* 学生端整体布局 */
 .student-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: #f7f8fb;
+  overflow: hidden;
 }
 
 .layout-content {
@@ -18,6 +19,7 @@ body {
   display: flex;
   flex-direction: column;
   margin-left: 257px;
+  overflow: hidden;
 }
 
 /* 响应式 */

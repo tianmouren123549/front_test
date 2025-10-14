@@ -68,12 +68,12 @@
 .schedule-grid {
   display: grid;
   grid-template-columns: 85px repeat(7, 1fr);
-  grid-template-rows: auto repeat(5, minmax(120px, 1fr));
+  grid-template-rows: auto repeat(5, 120px);
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
   background: white;
-  max-height: calc(100vh - 280px);
+  max-height: calc(100vh - 260px);
 }
 
 .grid-header {
@@ -389,7 +389,10 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+
+const router = useRouter();
 
 // 当前视图：schedule(课表) 或 courses(课程列表)
 const currentViewType = ref('schedule');
@@ -831,9 +834,15 @@ const handleCourseClick = course => {
   ElMessage.info(`课程详情功能开发中：${course.course_name}`);
 };
 
-// 点击课程卡片（课程列表视图）
+// 点击课程卡片（课程列表视图） → 跳转到课程详情页
 const handleCourseCardClick = course => {
-  ElMessage.info(`课程详情功能开发中：${course.course_name}`);
+  router.push({
+    path: '/student/course-detail',
+    query: {
+      courseId: course.course_id,
+      course: course.course_name,
+    },
+  });
 };
 </script>
 

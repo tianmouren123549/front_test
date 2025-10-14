@@ -34,20 +34,25 @@
 .user-area {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-shrink: 0;
 }
 
-.user-name {
-  color: #6b7280;
-  font-size: 14px;
+.user-info-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  cursor: pointer;
+}
+
+.user-name {
+  color: #6b7280;
+  font-size: 14px;
 }
 
 /* 响应式 */
@@ -129,7 +134,7 @@ const handleLogout = () => {
 
 // 个人中心
 const goToProfile = () => {
-  ElMessage.info('个人中心功能开发中');
+  router.push('/student/profile');
 };
 </script>
 
@@ -142,16 +147,18 @@ const goToProfile = () => {
     </div>
 
     <div class="user-area">
-      <span class="user-name">{{ userInfo.nick_name }}</span>
-      <el-dropdown @command="handleLogout">
-        <img :src="userInfo.avatar" alt="avatar" class="user-avatar" />
+      <el-dropdown trigger="click">
+        <div class="user-info-wrapper">
+          <img :src="userInfo.avatar" alt="avatar" class="user-avatar" />
+          <span class="user-name">{{ userInfo.nick_name }}</span>
+        </div>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="goToProfile">
               <el-icon><User /></el-icon>
               <span>个人中心</span>
             </el-dropdown-item>
-            <el-dropdown-item divided command="logout">
+            <el-dropdown-item divided @click="handleLogout">
               <el-icon><SwitchButton /></el-icon>
               <span>退出登录</span>
             </el-dropdown-item>

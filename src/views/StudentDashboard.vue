@@ -1,9 +1,11 @@
 <style scoped>
 .student-dashboard {
   padding: 0;
-  height: calc(100vh - 60px);
+  flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .view-container {

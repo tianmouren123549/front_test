@@ -214,6 +214,13 @@
 
 .cancel-btn {
   min-width: 120px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 /* 响应式设计 */
@@ -252,6 +259,7 @@ import {
   ArrowLeft,
   Phone,
   Postcard,
+  Message,
 } from '@element-plus/icons-vue';
 
 const router = useRouter();
@@ -276,6 +284,7 @@ const registerFormRef = ref(null);
 const registerForm = ref({
   username: '',
   name: '',
+  email: '', // sys_user.email VARCHAR(50)
   phone: '',
   password: '',
   confirmPassword: '',
@@ -334,6 +343,14 @@ const registerRules = {
   name: [
     { required: true, message: '请输入姓名', trigger: 'blur' },
     { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' },
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    {
+      type: 'email',
+      message: '请输入正确的邮箱格式',
+      trigger: ['blur', 'change'],
+    },
   ],
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
@@ -468,6 +485,7 @@ const openRegisterDialog = () => {
   registerForm.value = {
     username: '',
     name: '',
+    email: '',
     phone: '',
     password: '',
     confirmPassword: '',
@@ -495,6 +513,7 @@ const handleRegister = async () => {
     // const response = await axios.post('/api/auth/register', {
     //   username: registerForm.value.username,
     //   name: registerForm.value.name,
+    //   email: registerForm.value.email,
     //   phone: registerForm.value.phone,
     //   password: registerForm.value.password,
     //   role: currentRole.value
@@ -675,6 +694,20 @@ if (rememberedUser && rememberedRole) {
           >
             <template #prefix>
               <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+
+        <!-- 邮箱 -->
+        <el-form-item label="邮箱" prop="email">
+          <el-input
+            v-model="registerForm.email"
+            placeholder="请输入邮箱地址"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Message /></el-icon>
             </template>
           </el-input>
         </el-form-item>
