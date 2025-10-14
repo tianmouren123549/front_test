@@ -105,6 +105,7 @@
   margin-bottom: var(--spacing-xl);
 }
 
+/* 主按钮通用样式 */
 .login-btn {
   width: 100%;
   font-size: var(--font-size-lg);
@@ -112,20 +113,18 @@
   height: 48px;
   background: var(--primary-gradient);
   border: none;
+  color: white;
+  transition: all 0.2s ease;
 }
 
 .login-btn:hover {
-  background: linear-gradient(
-    45deg,
-    var(--primary-dark),
-    var(--secondary-dark)
-  );
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.25);
 }
 
 .login-btn:active {
-  transform: translateY(0);
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(30, 60, 114, 0.2);
 }
 
 /* 提示信息 */
@@ -194,33 +193,47 @@
   margin-top: var(--spacing-xl);
 }
 
+/* 对话框主按钮 */
 .register-btn {
   min-width: 120px;
-  font-size: var(--font-size-base);
+  height: 48px;
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   background: var(--primary-gradient);
   border: none;
+  color: white;
+  transition: all 0.2s ease;
 }
 
 .register-btn:hover {
-  background: linear-gradient(
-    45deg,
-    var(--primary-dark),
-    var(--secondary-dark)
-  );
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.25);
 }
 
+.register-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(30, 60, 114, 0.2);
+}
+
+/* 取消/返回按钮 */
 .cancel-btn {
   min-width: 120px;
+  height: 48px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   border-radius: 6px;
-  transition: all 0.3s;
+  border-color: #d1d5db;
+  transition: all 0.2s ease;
 }
 
 .cancel-btn:hover {
   background: #f3f4f6;
-  border-color: #d1d5db;
+  border-color: #9ca3af;
+}
+
+.cancel-btn:active {
+  transform: scale(0.98);
+  background: #e5e7eb;
 }
 
 /* 响应式设计 */
@@ -270,7 +283,7 @@ const currentRole = ref('student'); // 默认显示学生端
 // 登录表单
 const loginFormRef = ref(null);
 const loginForm = ref({
-  username: '',
+  user_name: '',  // 统一使用数据库字段名
   password: '',
   remember: false,
 });
@@ -282,12 +295,13 @@ const loading = ref(false);
 const registerDialogVisible = ref(false);
 const registerFormRef = ref(null);
 const registerForm = ref({
-  username: '',
-  name: '',
-  email: '', // sys_user.email VARCHAR(50)
-  phone: '',
-  password: '',
-  confirmPassword: '',
+  user_name: '',     // sys_user.user_name VARCHAR(30) - 用户账号
+  nick_name: '',     // sys_user.nick_name VARCHAR(30) - 用户昵称（显示名称）
+  real_name: '',     // sys_user.real_name VARCHAR(30) - 真实姓名
+  email: '',         // sys_user.email VARCHAR(50)
+  phone: '',         // sys_user.phone VARCHAR(11)
+  password: '',      // sys_user.password VARCHAR(100)
+  confirmPassword: '', // 前端验证字段
 });
 
 // 注册加载状态
@@ -312,7 +326,7 @@ const registerUsernamePlaceholder = computed(() => {
 
 // 表单验证规则
 const loginRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  user_name: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
@@ -332,17 +346,21 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 // 注册表单验证规则
 const registerRules = {
-  username: [
+  user_name: [
     {
       required: true,
       message: '请输入' + registerUsernameLabel.value,
       trigger: 'blur',
     },
-    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' },
+    { min: 3, max: 30, message: '长度在 3 到 30 个字符', trigger: 'blur' },
   ],
-  name: [
-    { required: true, message: '请输入姓名', trigger: 'blur' },
-    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' },
+  nick_name: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' },
+  ],
+  real_name: [
+    { required: true, message: '请输入真实姓名', trigger: 'blur' },
+    { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' },
   ],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -374,7 +392,7 @@ const registerRules = {
 const switchRole = role => {
   currentRole.value = role;
   // 清空表单
-  loginForm.value.username = '';
+  loginForm.value.user_name = '';
   loginForm.value.password = '';
   loginFormRef.value?.clearValidate();
 };
@@ -399,21 +417,21 @@ const handleLogin = async () => {
 
     // 模拟登录验证（仅用于开发测试）
     setTimeout(() => {
-      const { username, password, remember } = loginForm.value;
+      const { user_name, password, remember } = loginForm.value;
 
       let loginSuccess = false;
       let userName = '';
 
       // 学生端登录验证（模拟数据）
       if (currentRole.value === 'student') {
-        if (username === '2024001' && password === '123456') {
+        if (user_name === '2024001' && password === '123456') {
           loginSuccess = true;
           userName = '张三';
         }
       }
       // 教师端登录验证（模拟数据）
       else {
-        if (username === 'teacher001' && password === '123456') {
+        if (user_name === 'teacher001' && password === '123456') {
           loginSuccess = true;
           userName = '张老师';
         }
@@ -422,7 +440,7 @@ const handleLogin = async () => {
       if (loginSuccess) {
         // 保存登录信息
         if (remember) {
-          localStorage.setItem('rememberedUser', username);
+          localStorage.setItem('rememberedUser', user_name);
           localStorage.setItem('rememberedRole', currentRole.value);
         }
 
@@ -430,7 +448,7 @@ const handleLogin = async () => {
         sessionStorage.setItem(
           'currentUser',
           JSON.stringify({
-            username,
+            user_name,
             name: userName,
             role: currentRole.value === 'student' ? '学生' : '教师',
             roleType: currentRole.value,
@@ -480,8 +498,9 @@ const openRegisterDialog = () => {
   registerDialogVisible.value = true;
   // 清空注册表单
   registerForm.value = {
-    username: '',
-    name: '',
+    user_name: '',
+    nick_name: '',
+    real_name: '',
     email: '',
     phone: '',
     password: '',
@@ -529,7 +548,7 @@ const handleRegister = async () => {
       closeRegisterDialog();
 
       // 自动填充登录表单
-      loginForm.value.username = registerForm.value.username;
+      loginForm.value.user_name = registerForm.value.user_name;
       loginForm.value.password = '';
     }, 1500);
     // ==================== 🔴 模拟注册流程 END ====================
@@ -541,7 +560,7 @@ const rememberedUser = localStorage.getItem('rememberedUser');
 const rememberedRole = localStorage.getItem('rememberedRole');
 if (rememberedUser && rememberedRole) {
   currentRole.value = rememberedRole;
-  loginForm.value.username = rememberedUser;
+  loginForm.value.user_name = rememberedUser;
   loginForm.value.remember = true;
 }
 </script>
@@ -580,9 +599,9 @@ if (rememberedUser && rememberedRole) {
         class="login-form"
       >
         <!-- 用户名输入 -->
-        <el-form-item prop="username">
+        <el-form-item prop="user_name">
           <el-input
-            v-model="loginForm.username"
+            v-model="loginForm.user_name"
             :placeholder="usernamePlaceholder"
             size="large"
             clearable
@@ -668,9 +687,9 @@ if (rememberedUser && rememberedRole) {
         label-width="100px"
       >
         <!-- 学号/工号 -->
-        <el-form-item :label="registerUsernameLabel" prop="username">
+        <el-form-item :label="registerUsernameLabel" prop="user_name">
           <el-input
-            v-model="registerForm.username"
+            v-model="registerForm.user_name"
             :placeholder="registerUsernamePlaceholder"
             size="large"
             clearable
@@ -681,11 +700,25 @@ if (rememberedUser && rememberedRole) {
           </el-input>
         </el-form-item>
 
-        <!-- 姓名 -->
-        <el-form-item label="姓名" prop="name">
+        <!-- 昵称（显示名称） -->
+        <el-form-item label="昵称" prop="nick_name">
           <el-input
-            v-model="registerForm.name"
-            placeholder="请输入姓名"
+            v-model="registerForm.nick_name"
+            placeholder="请输入昵称（用于显示）"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+
+        <!-- 真实姓名 -->
+        <el-form-item label="真实姓名" prop="real_name">
+          <el-input
+            v-model="registerForm.real_name"
+            placeholder="请输入真实姓名"
             size="large"
             clearable
           >
@@ -767,9 +800,8 @@ if (rememberedUser && rememberedRole) {
             取消
           </el-button>
           <el-button
-            type="primary"
+            class="cancel-btn"
             size="large"
-            class="register-btn"
             :loading="registerLoading"
             @click="handleRegister"
           >

@@ -47,6 +47,10 @@
 /* 课表网格 */
 .schedule-wrap {
   padding: 18px 22px;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .schedule-legend {
@@ -65,15 +69,56 @@
   gap: 4px;
 }
 
-.schedule-grid {
-  display: grid;
-  grid-template-columns: 85px repeat(7, 1fr);
-  grid-template-rows: auto repeat(5, 120px);
+/* 滚动容器 */
+.schedule-container {
+  flex: 1;
+  overflow: auto;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  overflow: hidden;
   background: white;
-  max-height: calc(100vh - 260px);
+  height: calc(100vh - 280px); /* 固定高度，完全填满 */
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
+}
+
+/* 美化滚动条 */
+.schedule-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.schedule-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.schedule-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.schedule-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+.schedule-container::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox 滚动条 */
+.schedule-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 85px repeat(7, minmax(120px, 1fr));
+  grid-template-rows: auto repeat(5, 1fr); /* 使用1fr让行高自动填满容器 */
+  background: white;
+  min-width: 940px; /* 确保课表最小宽度：85px + 7*120px + 边距 */
+  height: 100%; /* 确保网格填满整个容器 */
 }
 
 .grid-header {
@@ -98,6 +143,7 @@
   flex-direction: column;
   background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
   border-right: 1px solid #e5e7eb;
+  height: 100%; /* 确保时间列填满整个高度 */
 }
 
 .time-slot {
@@ -113,6 +159,7 @@
   flex: 1;
   border-bottom: 1px solid #e5e7eb;
   font-weight: 600;
+  min-height: 0; /* 确保flex项目能够缩小到内容大小以下 */
 }
 
 .time-slot:last-child {
@@ -128,6 +175,7 @@
   padding: 12px 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 0; /* 确保单元格能够适应网格的动态高度 */
 }
 
 .schedule-cell:hover {
@@ -165,6 +213,10 @@
 .course-content {
   width: 100%;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%; /* 确保内容容器填满单元格 */
 }
 
 .course-name {
@@ -361,6 +413,12 @@
   .course-list {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
+
+  /* 在较小屏幕上调整课表网格最小宽度 */
+  .schedule-grid {
+    grid-template-columns: 75px repeat(7, minmax(110px, 1fr));
+    min-width: 845px; /* 75px + 7*110px + 边距 */
+  }
 }
 
 @media (max-width: 860px) {
@@ -373,8 +431,27 @@
     justify-content: center;
   }
 
+  .schedule-wrap {
+    padding: 16px 18px;
+  }
+
+  .schedule-container {
+    height: calc(100vh - 320px); /* 调整移动端高度 */
+    /* 移动端滚动条稍微加宽，方便触摸操作 */
+    scrollbar-width: auto;
+  }
+
+  .schedule-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
   .schedule-grid {
+    grid-template-columns: 60px repeat(7, minmax(95px, 1fr));
+    grid-template-rows: auto repeat(5, 1fr); /* 使用1fr填满容器 */
+    min-width: 725px; /* 60px + 7*95px + 边距 */
     font-size: 11px;
+    height: 100%;
   }
 
   .course-name {
@@ -383,6 +460,59 @@
 
   .teacher-name {
     font-size: 9px;
+  }
+
+  .grid-header div {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+
+  .time-slot {
+    padding: 10px 6px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-wrap {
+    padding: 12px 14px;
+  }
+
+  .schedule-container {
+    height: calc(100vh - 360px); /* 调整超小屏幕高度 */
+    /* 移动端更宽的滚动条，便于手指操作 */
+    scrollbar-width: thick;
+  }
+
+  .schedule-container::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  .schedule-grid {
+    grid-template-columns: 50px repeat(7, minmax(85px, 1fr));
+    grid-template-rows: auto repeat(5, 1fr); /* 使用1fr填满容器 */
+    min-width: 645px; /* 50px + 7*85px + 边距 */
+    font-size: 10px;
+    height: 100%;
+  }
+
+  .course-name {
+    font-size: 10px;
+  }
+
+  .teacher-name {
+    font-size: 8px;
+  }
+
+  .grid-header div {
+    padding: 10px 6px;
+    font-size: 11px;
+  }
+
+  .time-slot {
+    padding: 8px 4px;
+    font-size: 10px;
   }
 }
 </style>
@@ -952,67 +1082,70 @@ const handleCourseCardClick = course => {
         </div>
       </div>
 
-      <div class="schedule-grid">
-        <!-- 表头 -->
-        <div class="grid-header">
-          <div style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0)">
-            时间
-          </div>
-          <div>周一<br /><span style="font-size: 11px">02-02</span></div>
-          <div>周二<br /><span style="font-size: 11px">02-03</span></div>
-          <div>周三<br /><span style="font-size: 11px">02-04</span></div>
-          <div>周四<br /><span style="font-size: 11px">02-05</span></div>
-          <div>周五<br /><span style="font-size: 11px">02-06</span></div>
-          <div>周六<br /><span style="font-size: 11px">02-07</span></div>
-          <div>周日<br /><span style="font-size: 11px">02-08</span></div>
-        </div>
-
-        <!-- 时间列 -->
-        <div class="time-col">
-          <div class="time-slot">1<br />08:00-10:00</div>
-          <div class="time-slot">2<br />10:00-12:00</div>
-          <div class="time-slot">3<br />14:30-16:30</div>
-          <div class="time-slot">4<br />16:30-18:30</div>
-          <div class="time-slot">5<br />19:30-21:30</div>
-        </div>
-
-        <!-- 课程格子 -->
-        <template v-for="day in 7" :key="`day-${day}`">
-          <template v-for="period in 5" :key="`period-${period}`">
-            <div
-              v-if="getCourse(day, period)"
-              :class="[
-                'schedule-cell',
-                `course-${getCourseStatus(getCourse(day, period))}`,
-              ]"
-              :style="{
-                gridColumn: day + 1,
-                gridRow: period + 1,
-              }"
-              @click="handleCourseClick(getCourse(day, period))"
-            >
-              <div class="course-content">
-                <div class="course-name">
-                  {{ getCourse(day, period).course_name }}
-                </div>
-                <div class="teacher-name">
-                  {{ getCourse(day, period).teacher_name }}
-                </div>
-                <span class="status-icon">{{
-                  getCourseIcon(getCourseStatus(getCourse(day, period)))
-                }}</span>
-              </div>
+      <!-- 滚动容器 -->
+      <div class="schedule-container">
+        <div class="schedule-grid">
+          <!-- 表头 -->
+          <div class="grid-header">
+            <div style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0)">
+              时间
             </div>
-            <div
-              v-else
-              :class="['schedule-cell', 'empty']"
-              :style="{
-                gridColumn: day + 1,
-                gridRow: period + 1,
-              }"
-            ></div>
+            <div>周一<br /><span style="font-size: 11px">02-02</span></div>
+            <div>周二<br /><span style="font-size: 11px">02-03</span></div>
+            <div>周三<br /><span style="font-size: 11px">02-04</span></div>
+            <div>周四<br /><span style="font-size: 11px">02-05</span></div>
+            <div>周五<br /><span style="font-size: 11px">02-06</span></div>
+            <div>周六<br /><span style="font-size: 11px">02-07</span></div>
+            <div>周日<br /><span style="font-size: 11px">02-08</span></div>
+          </div>
+
+          <!-- 时间列 -->
+          <div class="time-col">
+            <div class="time-slot">1<br />08:00-10:00</div>
+            <div class="time-slot">2<br />10:00-12:00</div>
+            <div class="time-slot">3<br />14:30-16:30</div>
+            <div class="time-slot">4<br />16:30-18:30</div>
+            <div class="time-slot">5<br />19:30-21:30</div>
+          </div>
+
+          <!-- 课程格子 -->
+          <template v-for="day in 7" :key="`day-${day}`">
+            <template v-for="period in 5" :key="`period-${period}`">
+              <div
+                v-if="getCourse(day, period)"
+                :class="[
+                  'schedule-cell',
+                  `course-${getCourseStatus(getCourse(day, period))}`,
+                ]"
+                :style="{
+                  gridColumn: day + 1,
+                  gridRow: period + 1,
+                }"
+                @click="handleCourseClick(getCourse(day, period))"
+              >
+                <div class="course-content">
+                  <div class="course-name">
+                    {{ getCourse(day, period).course_name }}
+                  </div>
+                  <div class="teacher-name">
+                    {{ getCourse(day, period).teacher_name }}
+                  </div>
+                  <span class="status-icon">{{
+                    getCourseIcon(getCourseStatus(getCourse(day, period)))
+                  }}</span>
+                </div>
+              </div>
+              <div
+                v-else
+                :class="['schedule-cell', 'empty']"
+                :style="{
+                  gridColumn: day + 1,
+                  gridRow: period + 1,
+                }"
+              ></div>
+            </template>
           </template>
-        </template>
+        </div>
       </div>
     </div>
 
