@@ -11,6 +11,7 @@
   border-right: 1px solid #e5e7eb;
   padding: 20px 16px; /* 统一内边距 */
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 .brand {
@@ -388,12 +389,66 @@
   background: #f0f9ff;
   color: #22c55e;
 }
+
+/* 汉堡菜单按钮和遮罩层样式继承自 components.css */
+
+/* 遮罩层在课程详细页的特殊定位（PC端从侧边栏右边开始） */
+.sidebar-overlay {
+  left: var(--sidebar-width);
+}
+
+/* 响应式设计 */
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000; /* 提高层级，确保在遮罩上方 */
+    transform: translateX(-100%);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto; /* 添加滚动 */
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-overlay {
+    left: 0; /* 移动端从左边开始，覆盖PC端的侧边栏右边定位 */
+  }
+
+  .topbar {
+    padding-left: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 12px 16px 12px 70px;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+}
 </style>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import MobileMenuToggle from '@/components/common/MobileMenuToggle.vue';
+import SidebarOverlay from '@/components/common/SidebarOverlay.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -405,6 +460,17 @@ const courseName = computed(() => route.query.course || '课程名称');
 const activeView = ref('learning');
 const activeLearningTab = ref('log');
 const activeTaskTab = ref('homework');
+
+// 移动端侧边栏控制
+const sidebarOpen = ref(false);
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
+
+const closeSidebar = () => {
+  sidebarOpen.value = false;
+};
 
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取课程详情数据
@@ -793,25 +859,44 @@ const getExamStatusText = totalScore => {
 
 <template>
   <div class="course-detail">
+    <!-- 汉堡菜单按钮 - 侧边栏关闭时显示 -->
+    <MobileMenuToggle
+      :is-open="sidebarOpen"
+      :fixed="true"
+      @toggle="toggleSidebar"
+    />
+
+    <!-- 遮罩层 -->
+    <SidebarOverlay :is-show="sidebarOpen" @close="closeSidebar" />
+
     <!-- 左侧边栏 -->
-    <aside class="sidebar">
+    <aside :class="['sidebar', { 'mobile-open': sidebarOpen }]">
       <div class="brand">课程详情</div>
       <div class="sidebar-menu">
         <div
           :class="['menu-item', { active: activeView === 'learning' }]"
-          @click="switchView('learning')"
+          @click="
+            switchView('learning');
+            closeSidebar();
+          "
         >
           学习记录
         </div>
         <div
           :class="['menu-item', { active: activeView === 'chapters' }]"
-          @click="switchView('chapters')"
+          @click="
+            switchView('chapters');
+            closeSidebar();
+          "
         >
           章节内容
         </div>
         <div
           :class="['menu-item', { active: activeView === 'tasks' }]"
-          @click="switchView('tasks')"
+          @click="
+            switchView('tasks');
+            closeSidebar();
+          "
         >
           课程任务
         </div>

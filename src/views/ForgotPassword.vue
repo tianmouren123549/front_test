@@ -164,27 +164,50 @@
   line-height: 1.6;
 }
 
-.reset-btn {
-  width: 100%;
+/* 统一按钮样式 - 按压效果 */
+.step-btn {
+  min-width: 120px;
+  height: 48px;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  height: 48px;
-  background: var(--primary-gradient);
+  background: var(--primary-color);
+  color: var(--white);
   border: none;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(30, 60, 114, 0.2);
+  transition: all 0.15s ease;
+  position: relative;
 }
 
-.reset-btn:hover {
-  background: linear-gradient(
-    45deg,
-    var(--primary-dark),
-    var(--secondary-dark)
-  );
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
+.step-btn:hover {
+  background: var(--primary-color);
+  box-shadow: 0 2px 4px rgba(30, 60, 114, 0.3);
+  transform: translateY(2px);
 }
 
-.reset-btn:active {
-  transform: translateY(0);
+.step-btn:active {
+  background: var(--primary-dark);
+  box-shadow: 0 1px 2px rgba(30, 60, 114, 0.2);
+  transform: translateY(4px);
+}
+
+/* 单独的按钮全宽 */
+.forgot-password-form > .step-btn {
+  width: 100%;
+}
+
+/* 按钮组容器 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.button-group .step-btn {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 返回登录 */
@@ -218,6 +241,13 @@
   margin-bottom: var(--spacing-xl);
 }
 
+.success-message .step-btn {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+}
+
 /* 响应式设计 */
 @media (max-width: 480px) {
   .forgot-password-container {
@@ -240,7 +270,7 @@
     width: 20px;
   }
 
-  .reset-btn {
+  .step-btn {
     height: 44px;
     font-size: var(--font-size-base);
   }
@@ -451,17 +481,32 @@ const goToLogin = () => {
 
       <!-- 步骤指示器 -->
       <div class="step-indicator">
-        <div :class="['step', { active: currentStep === 1, completed: currentStep > 1 }]">
+        <div
+          :class="[
+            'step',
+            { active: currentStep === 1, completed: currentStep > 1 },
+          ]"
+        >
           <div class="step-number">1</div>
           <span class="step-label">输入账号</span>
         </div>
         <div class="step-separator"></div>
-        <div :class="['step', { active: currentStep === 2, completed: currentStep > 2 }]">
+        <div
+          :class="[
+            'step',
+            { active: currentStep === 2, completed: currentStep > 2 },
+          ]"
+        >
           <div class="step-number">2</div>
           <span class="step-label">验证身份</span>
         </div>
         <div class="step-separator"></div>
-        <div :class="['step', { active: currentStep === 3, completed: currentStep > 3 }]">
+        <div
+          :class="[
+            'step',
+            { active: currentStep === 3, completed: currentStep > 3 },
+          ]"
+        >
           <div class="step-number">3</div>
           <span class="step-label">重置密码</span>
         </div>
@@ -475,9 +520,7 @@ const goToLogin = () => {
           :rules="step1Rules"
           class="forgot-password-form"
         >
-          <div class="form-tip">
-            请输入您的学号或工号，我们将验证您的身份
-          </div>
+          <div class="form-tip">请输入您的学号或工号，我们将验证您的身份</div>
 
           <el-form-item prop="username">
             <el-input
@@ -495,7 +538,7 @@ const goToLogin = () => {
           <el-button
             type="primary"
             size="large"
-            class="reset-btn"
+            class="step-btn"
             :loading="loading"
             @click="handleStep1Submit"
           >
@@ -513,13 +556,19 @@ const goToLogin = () => {
         <!-- 验证方式选择 -->
         <div class="role-switch" style="margin-bottom: var(--spacing-lg)">
           <button
-            :class="['role-btn', { active: step2Form.verificationType === 'email' }]"
+            :class="[
+              'role-btn',
+              { active: step2Form.verificationType === 'email' },
+            ]"
             @click="switchVerificationType('email')"
           >
             邮箱验证
           </button>
           <button
-            :class="['role-btn', { active: step2Form.verificationType === 'phone' }]"
+            :class="[
+              'role-btn',
+              { active: step2Form.verificationType === 'phone' },
+            ]"
             @click="switchVerificationType('phone')"
           >
             手机验证
@@ -565,15 +614,19 @@ const goToLogin = () => {
             </el-form-item>
           </template>
 
-          <div style="display: flex; gap: 12px">
-            <el-button size="large" style="flex: 1" @click="goBack">
+          <div class="button-group">
+            <el-button
+              type="primary"
+              size="large"
+              class="step-btn"
+              @click="goBack"
+            >
               上一步
             </el-button>
             <el-button
               type="primary"
               size="large"
-              style="flex: 2"
-              class="reset-btn"
+              class="step-btn"
               :loading="loading"
               @click="handleStep2Submit"
             >
@@ -591,9 +644,7 @@ const goToLogin = () => {
           :rules="step3Rules"
           class="forgot-password-form"
         >
-          <div class="form-tip">
-            请设置新密码，密码长度为 6-20 个字符
-          </div>
+          <div class="form-tip">请设置新密码，密码长度为 6-20 个字符</div>
 
           <el-form-item prop="newPassword">
             <el-input
@@ -624,15 +675,19 @@ const goToLogin = () => {
             </el-input>
           </el-form-item>
 
-          <div style="display: flex; gap: 12px">
-            <el-button size="large" style="flex: 1" @click="goBack">
+          <div class="button-group">
+            <el-button
+              type="primary"
+              size="large"
+              class="step-btn"
+              @click="goBack"
+            >
               上一步
             </el-button>
             <el-button
               type="primary"
               size="large"
-              style="flex: 2"
-              class="reset-btn"
+              class="step-btn"
               :loading="loading"
               @click="handleStep3Submit"
             >
@@ -649,7 +704,12 @@ const goToLogin = () => {
         </div>
         <h2>密码重置成功！</h2>
         <p>您的密码已成功重置<br />即将跳转到登录页面...</p>
-        <el-button type="primary" size="large" @click="goToLogin">
+        <el-button
+          type="primary"
+          size="large"
+          class="step-btn"
+          @click="goToLogin"
+        >
           立即登录
         </el-button>
       </div>
@@ -664,4 +724,3 @@ const goToLogin = () => {
     </div>
   </div>
 </template>
-

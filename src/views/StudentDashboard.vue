@@ -4,7 +4,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
 }
 
@@ -13,7 +14,6 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
-  overflow: hidden;
   flex: 1;
   display: flex;
   flex-direction: column;

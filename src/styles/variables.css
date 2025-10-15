@@ -90,14 +90,63 @@
   --z-index-navbar: 1001;
   --z-index-modal: 1002;
   --z-index-tooltip: 1003;
+  
+  /* 侧边栏相关层级 */
+  --z-index-sidebar-overlay: 998;
+  --z-index-sidebar: 1000;
+  --z-index-menu-toggle: 1002;
+
+  /* ==================== 侧边栏布局 ==================== */
+  --sidebar-width: 257px;
+  --sidebar-padding: 20px 16px;
+  --sidebar-border-color: #e5e7eb;
+  --sidebar-bg: #ffffff;
+  --sidebar-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  
+  /* 侧边栏菜单 */
+  --sidebar-menu-item-padding: 12px 14px;
+  --sidebar-menu-item-radius: 8px;
+  --sidebar-menu-item-color: #334155;
+  --sidebar-menu-item-hover-bg: #f1f5f9;
+  --sidebar-menu-item-active-color: var(--primary-color);
+  --sidebar-menu-item-font-size: 15px;
+  
+  /* 汉堡菜单按钮 */
+  --menu-toggle-size: 40px;
+  --menu-toggle-radius: 8px;
+  --menu-toggle-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --menu-toggle-top: 18px;
+  --menu-toggle-left: 16px;
+  
+  /* 遮罩层 */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --overlay-transition: opacity var(--transition-base);
+
+  /* ==================== 顶栏布局 ==================== */
+  --topbar-height: 60px;
+  --topbar-padding: 16px 24px;
+  --topbar-border-color: #e5e7eb;
+  
+  /* ==================== 课程表布局 ==================== */
+  --schedule-grid-gap: 0;
+  --schedule-cell-min-height: 100px;
+  --schedule-header-bg: #f8fafc;
+  --schedule-header-color: #64748b;
+  --schedule-border-color: #e5e7eb;
+  --schedule-time-bg: #f8fafc;
+  --schedule-time-color: #94a3b8;
 }
 
 /* ==================== 响应式断点 ==================== */
 /* 使用时通过 @media (max-width: 768px) 等方式引用 */
 /* 
-  移动端: <= 480px
-  平板: 481px - 768px
-  桌面: > 768px
+  手机: <= 480px
+  平板: 481px - 860px
+  桌面: > 860px
+  
+  主要断点：
+  --breakpoint-mobile: 480px
+  --breakpoint-tablet: 860px
 */
 
 

@@ -48,9 +48,9 @@
 .schedule-wrap {
   padding: 18px 22px;
   flex: 1;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .schedule-legend {
@@ -76,7 +76,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   background: white;
-  height: calc(100vh - 280px); /* 固定高度，完全填满 */
+  min-height: 500px;
   /* 平滑滚动 */
   scroll-behavior: smooth;
 }
@@ -115,10 +115,10 @@
 .schedule-grid {
   display: grid;
   grid-template-columns: 85px repeat(7, minmax(120px, 1fr));
-  grid-template-rows: auto repeat(5, 1fr); /* 使用1fr让行高自动填满容器 */
+  grid-template-rows: auto repeat(5, minmax(100px, 1fr)); /* 使用minmax确保最小高度 */
   background: white;
   min-width: 940px; /* 确保课表最小宽度：85px + 7*120px + 边距 */
-  height: 100%; /* 确保网格填满整个容器 */
+  min-height: 100%; /* 最小高度填满容器，允许增长 */
 }
 
 .grid-header {
@@ -129,11 +129,12 @@
   padding: 16px 10px;
   font-weight: 600;
   text-align: center;
-  color: #475569;
+  color: #64748b;
   font-size: 13px;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  background: #f8fafc;
   border-bottom: 2px solid #e2e8f0;
   border-right: 1px solid #e5e7eb;
+  cursor: default;
 }
 
 .time-col {
@@ -141,15 +142,14 @@
   grid-row: 2 / -1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  background: #f8fafc;
   border-right: 1px solid #e5e7eb;
-  height: 100%; /* 确保时间列填满整个高度 */
 }
 
 .time-slot {
   padding: 14px 10px;
   font-size: 12px;
-  color: #6b7280;
+  color: #94a3b8;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -158,8 +158,9 @@
   line-height: 1.4;
   flex: 1;
   border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
+  font-weight: 500;
   min-height: 0; /* 确保flex项目能够缩小到内容大小以下 */
+  cursor: default;
 }
 
 .time-slot:last-child {
@@ -436,7 +437,7 @@
   }
 
   .schedule-container {
-    height: calc(100vh - 320px); /* 调整移动端高度 */
+    min-height: 400px;
     /* 移动端滚动条稍微加宽，方便触摸操作 */
     scrollbar-width: auto;
   }
@@ -448,10 +449,10 @@
 
   .schedule-grid {
     grid-template-columns: 60px repeat(7, minmax(95px, 1fr));
-    grid-template-rows: auto repeat(5, 1fr); /* 使用1fr填满容器 */
+    grid-template-rows: auto repeat(5, minmax(80px, 1fr)); /* 使用minmax确保最小高度 */
     min-width: 725px; /* 60px + 7*95px + 边距 */
     font-size: 11px;
-    height: 100%;
+    min-height: 100%;
   }
 
   .course-name {
@@ -479,7 +480,7 @@
   }
 
   .schedule-container {
-    height: calc(100vh - 360px); /* 调整超小屏幕高度 */
+    min-height: 350px;
     /* 移动端更宽的滚动条，便于手指操作 */
     scrollbar-width: thick;
   }
@@ -491,10 +492,10 @@
 
   .schedule-grid {
     grid-template-columns: 50px repeat(7, minmax(85px, 1fr));
-    grid-template-rows: auto repeat(5, 1fr); /* 使用1fr填满容器 */
+    grid-template-rows: auto repeat(5, minmax(70px, 1fr)); /* 使用minmax确保最小高度 */
     min-width: 645px; /* 50px + 7*85px + 边距 */
     font-size: 10px;
-    height: 100%;
+    min-height: 100%;
   }
 
   .course-name {
@@ -961,7 +962,7 @@ const getCourseIcon = status => {
 
 // 点击课程（课表视图）
 const handleCourseClick = course => {
-  ElMessage.info(`课程详情功能开发中：${course.course_name}`);
+  ElMessage.info(`直播间功能开发中:${course.course_name}`);
 };
 
 // 点击课程卡片（课程列表视图） → 跳转到课程详情页

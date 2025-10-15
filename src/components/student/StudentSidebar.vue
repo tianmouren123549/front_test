@@ -112,6 +112,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const currentView = inject('currentView');
 const switchView = inject('switchView');
+const sidebarOpen = inject('sidebarOpen', ref(false));
 
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取用户信息
@@ -181,7 +182,7 @@ const handleMenuClick = view => {
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside :class="['sidebar', { 'mobile-open': sidebarOpen }]">
     <div class="brand">北泽智慧教学平台（学生端）</div>
 
     <div class="profile">

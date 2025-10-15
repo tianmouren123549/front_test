@@ -12,6 +12,8 @@
   gap: 20px;
 }
 
+/* 汉堡菜单按钮样式继承自 components.css */
+
 .announce-area {
   flex: 1;
   display: flex;
@@ -57,19 +59,32 @@
 
 /* 响应式 */
 @media (max-width: 860px) {
+  .menu-toggle {
+    display: flex;
+  }
+
   .announce-inline {
     font-size: 12px;
     padding: 6px 12px;
+  }
+
+  .announce-area {
+    margin-left: 8px;
   }
 }
 </style>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import MobileMenuToggle from '@/components/common/MobileMenuToggle.vue';
 
 const router = useRouter();
+
+// 注入侧边栏控制函数
+const toggleSidebar = inject('toggleSidebar', () => {});
+const sidebarOpen = inject('sidebarOpen', ref(false));
 
 // ==================== 🔴 模拟数据 START ====================
 // TODO: 后续需要从后端API获取用户信息
@@ -140,6 +155,9 @@ const goToProfile = () => {
 
 <template>
   <div class="topbar">
+    <!-- 汉堡菜单按钮 - 侧边栏关闭时显示 -->
+    <MobileMenuToggle :is-open="sidebarOpen" @toggle="toggleSidebar" />
+
     <div class="announce-area">
       <span class="announce-inline"
         >公告栏：本周起上课时间调整为 8:30 开始</span

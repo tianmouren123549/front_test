@@ -2,6 +2,7 @@
 @import './base.css';
 @import '../styles/variables.css';
 @import '../styles/common.css';
+@import '../styles/components.css'; /* 公共组件样式 */
 
 /* 应用容器 */
 #app {

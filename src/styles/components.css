@@ -1,0 +1,116 @@
+/* ========================================
+   公共组件样式
+   使用 CSS 变量统一管理硬编码值
+   所有变量定义在 src/styles/variables.css
+   ======================================== */
+
+/* ==================== 汉堡菜单按钮 ==================== */
+.menu-toggle {
+  display: none;
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+  width: var(--menu-toggle-size);
+  height: var(--menu-toggle-size);
+  border-radius: var(--menu-toggle-radius);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--menu-toggle-shadow);
+  transition: all var(--transition-base) var(--ease-in-out);
+}
+
+.menu-toggle:hover {
+  background: var(--primary-light);
+  transform: scale(1.05);
+}
+
+.menu-toggle:active {
+  transform: scale(0.95);
+}
+
+/* 固定定位的汉堡菜单（用于课程详细页等独立页面） */
+.menu-toggle-fixed {
+  position: fixed;
+  top: var(--menu-toggle-top);
+  left: var(--menu-toggle-left);
+  z-index: var(--z-index-menu-toggle);
+}
+
+/* ==================== 侧边栏遮罩层 ==================== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--overlay-bg);
+  z-index: var(--z-index-sidebar-overlay);
+  opacity: 0;
+  transition: var(--overlay-transition);
+  pointer-events: none;
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==================== 侧边栏基础样式 ==================== */
+.sidebar-base {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border-color);
+  padding: var(--sidebar-padding);
+  flex-shrink: 0;
+  transition: transform var(--transition-base) var(--ease-in-out);
+}
+
+/* ==================== 侧边栏菜单项 ==================== */
+.sidebar-menu-item {
+  padding: var(--sidebar-menu-item-padding);
+  border-radius: var(--sidebar-menu-item-radius);
+  color: var(--sidebar-menu-item-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--sidebar-menu-item-font-size);
+  font-weight: var(--font-weight-medium);
+}
+
+.sidebar-menu-item:hover {
+  background: var(--sidebar-menu-item-hover-bg);
+}
+
+.sidebar-menu-item.active {
+  background: var(--sidebar-menu-item-hover-bg);
+  color: var(--sidebar-menu-item-active-color);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ==================== 响应式侧边栏 ==================== */
+@media (max-width: 860px) {
+  .menu-toggle {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar-responsive {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: var(--z-index-sidebar);
+    transform: translateX(-100%);
+    box-shadow: var(--sidebar-shadow);
+    overflow-y: auto;
+  }
+
+  .sidebar-responsive.mobile-open {
+    transform: translateX(0);
+  }
+}
+

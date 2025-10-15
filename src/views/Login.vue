@@ -283,7 +283,7 @@ const currentRole = ref('student'); // 默认显示学生端
 // 登录表单
 const loginFormRef = ref(null);
 const loginForm = ref({
-  user_name: '',  // 统一使用数据库字段名
+  user_name: '', // 统一使用数据库字段名
   password: '',
   remember: false,
 });
@@ -295,12 +295,12 @@ const loading = ref(false);
 const registerDialogVisible = ref(false);
 const registerFormRef = ref(null);
 const registerForm = ref({
-  user_name: '',     // sys_user.user_name VARCHAR(30) - 用户账号
-  nick_name: '',     // sys_user.nick_name VARCHAR(30) - 用户昵称（显示名称）
-  real_name: '',     // sys_user.real_name VARCHAR(30) - 真实姓名
-  email: '',         // sys_user.email VARCHAR(50)
-  phone: '',         // sys_user.phone VARCHAR(11)
-  password: '',      // sys_user.password VARCHAR(100)
+  user_name: '', // sys_user.user_name VARCHAR(30) - 用户账号
+  nick_name: '', // sys_user.nick_name VARCHAR(30) - 用户昵称（显示名称）
+  real_name: '', // sys_user.real_name VARCHAR(30) - 真实姓名
+  email: '', // sys_user.email VARCHAR(50)
+  phone: '', // sys_user.phone VARCHAR(11)
+  password: '', // sys_user.password VARCHAR(100)
   confirmPassword: '', // 前端验证字段
 });
 
